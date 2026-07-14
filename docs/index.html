@@ -6,14 +6,14 @@
     <meta name="theme-color" content="#1b5ba8" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <title>Mykonos Island Voxels</title>
+    <title>The Islander</title>
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
     <div id="loading-screen">
         <div class="loading-card">
             <div class="loading-logo"></div>
-            <div class="loading-title">Mykonos Island Voxels</div>
+            <div class="loading-title">The Islander</div>
             <div class="loading-sub">Generating asset pack…</div>
             <div class="loading-bar"><div class="loading-fill" id="loading-fill"></div></div>
             <div class="loading-status" id="loading-status">warming the kilns</div>
@@ -26,14 +26,15 @@
         <header id="title-card">
             <div class="title-logo"></div>
             <div class="title-text">
-                <h1>Mykonos Island Voxels</h1>
-                <p>Build beautiful Mediterranean voxel worlds</p>
+                <h1>The Islander</h1>
+                <p>Design and shape your dream island</p>
             </div>
         </header>
 
         <aside id="toolbar"></aside>
 
         <section id="palette">
+            <div id="palette-themes" role="group" aria-label="Theme"></div>
             <nav id="palette-tabs"></nav>
             <div id="palette-grid"></div>
         </section>
@@ -50,7 +51,16 @@
                 <label class="toggle"><span>Grid</span><input type="checkbox" id="toggle-grid" /><span class="switch"></span></label>
                 <label class="toggle"><span>Borders</span><input type="checkbox" id="toggle-borders" checked /><span class="switch"></span></label>
             </div>
-            <div class="hud-layers">Layers</div>
+            <div class="hud-world">
+                <div class="hud-field">
+                    <span class="hud-field-label">Island size</span>
+                    <div id="hud-size" class="seg" role="group" aria-label="Grid size"></div>
+                </div>
+                <div class="hud-field">
+                    <span class="hud-field-label">Island shape</span>
+                    <select id="hud-shape" class="hud-select" aria-label="Island shape"></select>
+                </div>
+            </div>
         </section>
 
         <details id="instructions" aria-label="Controls help">

@@ -12,7 +12,13 @@ import { Renderer } from './Renderer.js';
 import { InputManager } from './InputManager.js';
 import { TileMap } from '../grid/TileMap.js';
 import { PlacementSystem } from '../building/PlacementSystem.js';
-import { ASSET_INDEX, ASSET_MANIFEST } from '../assets/assetManifest.js';
+import {
+    ASSET_INDEX,
+    THEME_INDEX,
+    DEFAULT_THEME_ID,
+    getThemeManifest,
+    reThemeAssetId,
+} from '../assets/assetManifest.js';
 import { SaveSystem } from '../storage/SaveSystem.js';
 import { cellToScreen } from '../grid/IsoGrid.js';
 import { playPlacementFor } from '../ui/Audio.js';
@@ -33,7 +39,9 @@ export class Game {
         // Default selection
         this.tool = 'place';                  // 'place' | 'erase' | 'pan'
         this.category = 'terrain';
-        this.selectedAssetId = ASSET_MANIFEST.find(a => a.category === 'terrain').id;
+        this.theme = DEFAULT_THEME_ID;         // active palette theme
+        this.selectedAssetId = getThemeManifest(this.theme)
+            .find(a => a.category === 'terrain').id;
         this.ui = ui;
 
         // Preview-only flip state for the current selection. Toggled by the
@@ -71,8 +79,8 @@ export class Game {
     setCategory(cat) {
         if (this.category === cat) return;
         this.category = cat;
-        // Auto-select first asset of that category.
-        const first = ASSET_MANIFEST.find(a => a.category === cat);
+        // Auto-select first asset of that category (within the active theme).
+        const first = getThemeManifest(this.theme).find(a => a.category === cat);
         if (first) this.selectedAssetId = first.id;
         this._resetFlip();
         this.renderer.markDirty();
@@ -87,6 +95,27 @@ export class Game {
         this.category = a.category;
         if (changed) this._resetFlip();
         // Picking an asset implies "place" mode.
+        if (this.tool === 'erase') this.setTool('place');
+        this.renderer.markDirty();
+        this.ui?.update();
+    }
+
+    /**
+     * Switch the active palette theme. Already-placed objects keep their own
+     * (absolute) asset ids and are left untouched — the theme only governs
+     * what the palette offers and what new placements draw from. The current
+     * selection is re-anchored onto the new theme's equivalent asset so the
+     * same category/tool stays live across the switch.
+     */
+    setTheme(themeId) {
+        if (this.theme === themeId || !THEME_INDEX[themeId]) return;
+        this.theme = themeId;
+        const remapped = reThemeAssetId(this.selectedAssetId, themeId);
+        const manifest = getThemeManifest(themeId);
+        this.selectedAssetId = ASSET_INDEX[remapped]
+            ? remapped
+            : (manifest.find(a => a.category === this.category) ?? manifest[0]).id;
+        this._resetFlip();
         if (this.tool === 'erase') this.setTool('place');
         this.renderer.markDirty();
         this.ui?.update();
@@ -127,14 +156,23 @@ export class Game {
     }
 
     save() {
-        const ok = SaveSystem.save(this.tileMap, this.camera);
+        const ok = SaveSystem.save(this.tileMap, this.camera, this.theme);
         this.ui?.showToast(ok ? 'Saved your island' : 'Save failed');
     }
 
     load() {
-        const ok = SaveSystem.load(this.tileMap, this.camera);
-        if (ok) this.renderer.markDirty();
-        return ok;
+        const res = SaveSystem.load(this.tileMap, this.camera);
+        if (!res || !res.ok) return false;
+        // Restore the palette to the theme the island was saved with.
+        if (res.theme && THEME_INDEX[res.theme]) {
+            this.theme = res.theme;
+            this.selectedAssetId = reThemeAssetId(this.selectedAssetId, res.theme);
+            this._resetFlip();
+        }
+        this.renderer.markDirty();
+        this.ui?.hud?.syncWorld();
+        this.ui?.update();
+        return true;
     }
 
     reset() {
@@ -143,6 +181,36 @@ export class Game {
         this._centerCamera();
         this.renderer.markDirty();
         this.ui?.showToast('World reset');
+    }
+
+    /* ── World size / shape ───────────────────────────────────── */
+
+    setGridSize(presetId) {
+        const preset = CONFIG.grid.presets.find(p => p.id === presetId);
+        if (!preset) return;
+        if (this.tileMap.width === preset.size && this.tileMap.height === preset.size) return;
+        this._applyLayout(preset.size, preset.size, this.tileMap.shape);
+    }
+
+    setIslandShape(shapeId) {
+        if (this.tileMap.shape === shapeId) return;
+        this._applyLayout(this.tileMap.width, this.tileMap.height, shapeId);
+    }
+
+    /**
+     * Resize / reshape the island. Content that no longer sits on land is
+     * dropped (reported via a toast), the camera recentres on the new grid,
+     * and the renderer + HUD resync.
+     */
+    _applyLayout(width, height, shape) {
+        const removed = this.tileMap.applyLayout(width, height, shape);
+        this._centerCamera();
+        this.renderer.markDirty();
+        this.ui?.hud?.syncWorld();
+        this.ui?.update();
+        if (removed > 0) {
+            this.ui?.showToast(`Removed ${removed} ${removed === 1 ? 'item' : 'items'} off the island`);
+        }
     }
 
     /**
@@ -165,14 +233,14 @@ export class Game {
         for (let gy = 0; gy < H; gy++)
         for (let gx = 0; gx < W; gx++) {
             if (this.tileMap.getTerrain(gx, gy)) continue;
-            if (this.placeAndAnimate('grass', gx, gy, { delay: (gx + gy) * STEP_MS })) {
+            if (this.placeAndAnimate('gmk_grass', gx, gy, { delay: (gx + gy) * STEP_MS })) {
                 filled++;
             }
         }
         if (filled > 0) {
             // One sound at the start; the per-tile placement audio path
             // would fire ~196 times in a fraction of a second otherwise.
-            playPlacementFor('grass');
+            playPlacementFor('gmk_grass');
             this.ui?.showToast(`Filled ${filled} ${filled === 1 ? 'tile' : 'tiles'} with grass`);
         } else {
             this.ui?.showToast('Grid already covered');

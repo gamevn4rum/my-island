@@ -115,6 +115,7 @@ export class Renderer {
         this._platformCanvas = null;
         this._platformGridW  = -1;
         this._platformGridH  = -1;
+        this._platformLayout = -1;
         this._terrainCanvas  = null;
         this._terrainVersion = -1;
         this._objectsCanvas  = null;
@@ -360,16 +361,23 @@ export class Renderer {
 
     _ensurePlatformCache() {
         const W = this.tileMap.width, H = this.tileMap.height;
+        const layout = this.tileMap.layoutVersion | 0;
         if (this._platformCanvas
             && this._platformGridW === W
-            && this._platformGridH === H) {
+            && this._platformGridH === H
+            && this._platformLayout === layout) {
             return;
         }
-        // Grid size changed (or first build): invalidate every world cache
-        // since they all share the same world-coordinate frame.
-        this._worldBounds = this._computeWorldBounds();
-        this._terrainCanvas = null;
-        this._objectsCanvas = null;
+        // Grid size changed (or first build): the whole world-coordinate
+        // frame moved, so every world-space cache must be rebuilt. A pure
+        // shape change keeps the same frame — only the platform (and the
+        // version-gated terrain/objects) need repainting.
+        const sizeChanged = this._platformGridW !== W || this._platformGridH !== H;
+        if (sizeChanged || !this._worldBounds) {
+            this._worldBounds = this._computeWorldBounds();
+            this._terrainCanvas = null;
+            this._objectsCanvas = null;
+        }
         const wb = this._worldBounds;
         const c = document.createElement('canvas');
         c.width  = wb.w;
@@ -380,6 +388,7 @@ export class Renderer {
         this._platformCanvas = c;
         this._platformGridW = W;
         this._platformGridH = H;
+        this._platformLayout = layout;
     }
 
     _paintBackdrop(ctx, w, h) {
@@ -425,26 +434,57 @@ export class Renderer {
      * grid size; the camera transform applied at draw time scales / pans
      * the result naturally, so pan & zoom never re-trigger this work.
      */
-    _paintPlatform(ctx) {
-        const gw = this.tileMap.width, gh = this.tileMap.height;
-        const corners = [
-            cellToScreen(0, 0),
-            cellToScreen(gw, 0),
-            cellToScreen(gw, gh),
-            cellToScreen(0, gh),
-        ];
+    /**
+     * Trace the union of every grid cell that passes `test`, one Path built
+     * from per-cell diamond sub-paths. Cells tile perfectly, so nonzero-
+     * winding `fill()` merges them seamlessly while gaps stay unfilled.
+     * Backs both the land slab and the sea, so they always share a coastline.
+     */
+    _traceCellUnion(ctx, test) {
+        const tm = this.tileMap;
+        const W = tm.width, H = tm.height;
+        ctx.beginPath();
+        for (let gy = 0; gy < H; gy++)
+        for (let gx = 0; gx < W; gx++) {
+            if (!test(gx, gy)) continue;
+            const a = cellToScreen(gx, gy);
+            const b = cellToScreen(gx + 1, gy);
+            const c = cellToScreen(gx + 1, gy + 1);
+            const d = cellToScreen(gx, gy + 1);
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.lineTo(c.x, c.y);
+            ctx.lineTo(d.x, d.y);
+            ctx.closePath();
+        }
+    }
 
-        const tracePlatform = () => {
+    /** Land silhouette — used by the slab fill and the grid clip. */
+    _traceLandPath(ctx) {
+        this._traceCellUnion(ctx, (gx, gy) => this.tileMap.isLand(gx, gy));
+    }
+
+    _paintPlatform(ctx) {
+        const tm = this.tileMap;
+        const W = tm.width, H = tm.height;
+        const topC = cellToScreen(0, 0);
+        const botC = cellToScreen(W, H);
+
+        // The floating tile is the whole grid square: land where the island
+        // is, sea in every unoccupied cell. Its drop shadow is therefore cast
+        // by the square. Multiple progressively darker offsets fake a blurred
+        // shadow even when ctx.filter is unsupported; blur is in world pixels
+        // so the camera scales it zoom-correctly at draw time.
+        const sq = [
+            cellToScreen(0, 0), cellToScreen(W, 0),
+            cellToScreen(W, H), cellToScreen(0, H),
+        ];
+        const traceSquare = () => {
             ctx.beginPath();
-            ctx.moveTo(corners[0].x, corners[0].y);
-            for (let i = 1; i < 4; i++) ctx.lineTo(corners[i].x, corners[i].y);
+            ctx.moveTo(sq[0].x, sq[0].y);
+            for (let i = 1; i < 4; i++) ctx.lineTo(sq[i].x, sq[i].y);
             ctx.closePath();
         };
-
-        // Soft outer glow – multiple progressively darker offsets fake a
-        // proper blurred drop shadow even when ctx.filter is unsupported.
-        // Blur values are in world pixels here; the camera scales them
-        // visually at draw time, which gives a free zoom-correct shadow.
         const passes = [
             { dx:  0, dy: 36, blur: 28, alpha: 0.10 },
             { dx:  4, dy: 24, blur: 14, alpha: 0.12 },
@@ -455,26 +495,52 @@ export class Renderer {
             ctx.save();
             if (supportsFilter) ctx.filter = `blur(${p.blur}px)`;
             ctx.translate(p.dx, p.dy);
-            tracePlatform();
+            traceSquare();
             ctx.fillStyle = `rgba(40, 28, 10, ${p.alpha})`;
             ctx.fill();
             ctx.restore();
         }
 
-        tracePlatform();
-        const base = ctx.createLinearGradient(
-            corners[0].x, corners[0].y,
-            corners[2].x, corners[2].y,
-        );
+        // Sea — fills every unoccupied cell (the path is empty on a Full
+        // island, so nothing paints and the default look is unchanged).
+        this._traceCellUnion(ctx, (gx, gy) => !tm.isLand(gx, gy));
+        const sea = ctx.createLinearGradient(topC.x, topC.y, botC.x, botC.y);
+        sea.addColorStop(0,   'rgba(168, 224, 238, 0.95)');
+        sea.addColorStop(0.5, 'rgba(110, 200, 224, 0.95)');
+        sea.addColorStop(1,   'rgba( 77, 168, 196, 0.95)');
+        ctx.fillStyle = sea;
+        ctx.fill();
+
+        // Cream land slab — same gradient/opacity as the original full island,
+        // painted over parchment (land and sea never overlap).
+        this._traceLandPath(ctx);
+        const base = ctx.createLinearGradient(topC.x, topC.y, botC.x, botC.y);
         base.addColorStop(0, 'rgba(252, 245, 226, 0.85)');
         base.addColorStop(1, 'rgba(231, 217, 188, 0.85)');
         ctx.fillStyle = base;
         ctx.fill();
 
+        // Back-edge highlight: stroke every exposed upper-left / upper-right
+        // land edge (back neighbour is sea or off-grid) — the sunlit coast on
+        // the back sides. On a full island this is exactly the two back
+        // silhouette edges; on carved shapes it also rims coastlines / lagoons.
         ctx.beginPath();
-        ctx.moveTo(corners[3].x, corners[3].y);
-        ctx.lineTo(corners[0].x, corners[0].y);
-        ctx.lineTo(corners[1].x, corners[1].y);
+        for (let gy = 0; gy < H; gy++)
+        for (let gx = 0; gx < W; gx++) {
+            if (!tm.isLand(gx, gy)) continue;
+            if (!tm.isLand(gx - 1, gy)) {
+                const p0 = cellToScreen(gx, gy);
+                const p1 = cellToScreen(gx, gy + 1);
+                ctx.moveTo(p0.x, p0.y);
+                ctx.lineTo(p1.x, p1.y);
+            }
+            if (!tm.isLand(gx, gy - 1)) {
+                const p0 = cellToScreen(gx, gy);
+                const p1 = cellToScreen(gx + 1, gy);
+                ctx.moveTo(p0.x, p0.y);
+                ctx.lineTo(p1.x, p1.y);
+            }
+        }
         ctx.lineWidth = 1.5;
         ctx.strokeStyle = 'rgba(255, 248, 226, 0.55)';
         ctx.stroke();
@@ -929,6 +995,10 @@ export class Renderer {
     _drawGrid() {
         const ctx = this.ctx;
         ctx.save();
+        // Clip to the island so grid lines never stray over void cells
+        // (shape holes, water gaps between islets).
+        this._traceLandPath(ctx);
+        ctx.clip();
         ctx.lineWidth = 1 / this.camera.zoom;
         ctx.strokeStyle = 'rgba(60, 50, 30, 0.18)';
         ctx.beginPath();

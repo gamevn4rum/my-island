@@ -10,6 +10,14 @@ export const CONFIG = Object.freeze({
     grid: {
         width: 14,
         height: 14,
+        // Selectable square-grid sizes (the default 14 is 'm').
+        presets: [
+            { id: 's',  name: 'S',  size: 10 },
+            { id: 'm',  name: 'M',  size: 14 },
+            { id: 'l',  name: 'L',  size: 20 },
+            { id: 'xl', name: 'XL', size: 26 },
+        ],
+        defaultShape: 'full',
     },
 
     // A "tile" is one cell on the isometric ground grid.

@@ -137,16 +137,16 @@ export function playTreePlacement(volume = 0.6)        { play('placementTree',  
  */
 const STONE_ASSET_IDS = new Set([
     // Terrain
-    'stone', 'path', 'sea_wall', 'stairs',
+    'gmk_stone', 'gmk_path', 'gmk_sea_wall', 'gmk_stairs',
     // Walls / arches / lanterns / basins
-    'low_wall', 'corner_wall', 'archway',
-    'stone_lantern', 'stone_basin', 'well',
+    'gmk_low_wall', 'gmk_corner_wall', 'gmk_archway',
+    'gmk_stone_lantern', 'gmk_stone_basin', 'gmk_well',
     // Rock clutter
-    'rocks', 'large_rock', 'mossy_stone', 'flat_stone',
-    'pebbles', 'stone_pile', 'boulder',
+    'gmk_rocks', 'gmk_large_rock', 'gmk_mossy_stone', 'gmk_flat_stone',
+    'gmk_pebbles', 'gmk_stone_pile', 'gmk_boulder',
     // Buildings (whitewashed masonry)
-    'house', 'two_story', 'cube_house', 'terrace_house', 'pergola_house',
-    'villa', 'altar', 'tower_chapel', 'main_chapel', 'windmill',
+    'gmk_house', 'gmk_two_story', 'gmk_cube_house', 'gmk_terrace_house', 'gmk_pergola_house',
+    'gmk_villa', 'gmk_altar', 'gmk_tower_chapel', 'gmk_main_chapel', 'gmk_windmill',
 ]);
 
 /**
@@ -156,15 +156,15 @@ const STONE_ASSET_IDS = new Set([
  */
 const WOOD_ASSET_IDS = new Set([
     // Fences / railings / gates
-    'blue_railing', 'gate_fence',
+    'gmk_blue_railing', 'gmk_gate_fence',
     // Wooden furniture / signage
-    'bench', 'signpost', 'banner',
+    'gmk_bench', 'gmk_signpost', 'gmk_banner',
     // Lantern posts (wooden mast)
-    'lantern_post', 'hanging_lantern',
+    'gmk_lantern_post', 'gmk_hanging_lantern',
     // Wooden carryables
-    'crate', 'hay_bale', 'storage_box', 'wood_pile', 'water_bucket',
+    'gmk_crate', 'gmk_hay_bale', 'gmk_storage_box', 'gmk_wood_pile', 'gmk_water_bucket',
     // Wooden water-category structures
-    'small_bridge', 'garden_bed', 'crop_patch', 'veg_garden',
+    'gmk_small_bridge', 'gmk_garden_bed', 'gmk_crop_patch', 'gmk_veg_garden',
 ]);
 
 /**
@@ -173,8 +173,8 @@ const WOOD_ASSET_IDS = new Set([
  * (succulents, grass tufts, potted flowers).
  */
 const SMALL_VEG_ASSET_IDS = new Set([
-    'grass',
-    'agave', 'dry_grass', 'flower_pot', 'terracotta_pot',
+    'gmk_grass',
+    'gmk_agave', 'gmk_dry_grass', 'gmk_flower_pot', 'gmk_terracotta_pot',
 ]);
 
 /**
@@ -182,7 +182,7 @@ const SMALL_VEG_ASSET_IDS = new Set([
  * tree whoosh. Reserved for full trees and tall flowering plants.
  */
 const LARGE_VEG_ASSET_IDS = new Set([
-    'cypress', 'olive', 'bougainvillea',
+    'gmk_cypress', 'gmk_olive', 'gmk_bougainvillea',
 ]);
 
 /**
@@ -198,7 +198,7 @@ const LARGE_VEG_ASSET_IDS = new Set([
  * asset taxonomy.
  */
 export function playPlacementFor(assetId) {
-    if (assetId === 'water') {
+    if (assetId === 'gmk_water') {
         playWaterPlacement();
         return;
     }

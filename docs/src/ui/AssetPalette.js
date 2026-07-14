@@ -6,18 +6,38 @@
  * they'll be placing.
  */
 
-import { ASSET_MANIFEST, CATEGORIES } from '../assets/assetManifest.js';
+import { CATEGORIES, THEMES, getThemeManifest } from '../assets/assetManifest.js';
 import { allAssets } from '../assets/assetLoader.js';
 import { playUiClick } from './Audio.js';
 
 export class AssetPalette {
-    constructor(tabsEl, gridEl, game) {
+    constructor(themesEl, tabsEl, gridEl, game) {
+        this.themesEl = themesEl;
         this.tabsEl = tabsEl;
         this.gridEl = gridEl;
         this.game = game;
         this.tabButtons = new Map();
+        this.themeButtons = new Map();
+        this._buildThemes();
         this._buildTabs();
         this._renderGrid();
+    }
+
+    _buildThemes() {
+        this.themesEl.innerHTML = '';
+        for (const t of THEMES) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'theme-btn';
+            btn.textContent = t.name;
+            btn.dataset.theme = t.id;
+            btn.addEventListener('click', () => {
+                playUiClick();
+                this.game.setTheme(t.id);
+            });
+            this.themesEl.appendChild(btn);
+            this.themeButtons.set(t.id, btn);
+        }
     }
 
     _buildTabs() {
@@ -40,7 +60,8 @@ export class AssetPalette {
     _renderGrid() {
         this.gridEl.innerHTML = '';
         const generated = allAssets();
-        const items = ASSET_MANIFEST.filter(a => a.category === this.game.category);
+        const items = getThemeManifest(this.game.theme)
+            .filter(a => a.category === this.game.category);
         for (const def of items) {
             const swatch = document.createElement('button');
             swatch.type = 'button';
@@ -76,13 +97,17 @@ export class AssetPalette {
     }
 
     update() {
+        for (const [id, btn] of this.themeButtons) {
+            btn.classList.toggle('active', id === this.game.theme);
+        }
         for (const [c, btn] of this.tabButtons) {
             btn.classList.toggle('active', c === this.game.category);
         }
-        // Re-render grid only when category changed.
+        // Re-render grid only when the visible asset set changed — covers
+        // both a category switch and a theme switch (ids differ per theme).
         const visibleIds = Array.from(this.gridEl.querySelectorAll('.swatch'))
             .map(el => el.dataset.assetId);
-        const expectedIds = ASSET_MANIFEST
+        const expectedIds = getThemeManifest(this.game.theme)
             .filter(a => a.category === this.game.category)
             .map(a => a.id);
         const sameSet = visibleIds.length === expectedIds.length
