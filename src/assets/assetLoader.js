@@ -14,7 +14,7 @@
  * path is never taken at runtime.
  */
 
-import { ASSET_MANIFEST } from './assetManifest.js';
+import { ALL_ASSETS } from './assetManifest.js';
 import { imageToAsset, loadImageElement } from './imageToAsset.js';
 import { renderVoxels } from './voxelRenderer.js';
 
@@ -191,12 +191,12 @@ function buildContactPoints(srcCanvas, displayW, displayH) {
 export async function loadAssets(onProgress = () => {}) {
     if (_assets) return _assets;
     const out = {};
-    const total = ASSET_MANIFEST.length;
+    const total = ALL_ASSETS.length;
     let imageCount = 0;
     let fallbackCount = 0;
 
     for (let i = 0; i < total; i++) {
-        const entry = ASSET_MANIFEST[i];
+        const entry = ALL_ASSETS[i];
         const meta = {
             id: entry.id,
             name: entry.name,

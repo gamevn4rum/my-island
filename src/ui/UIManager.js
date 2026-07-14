@@ -14,6 +14,7 @@ export class UIManager {
         this.game = game;
         this.toolbar = new Toolbar(document.getElementById('toolbar'), game);
         this.palette = new AssetPalette(
+            document.getElementById('palette-themes'),
             document.getElementById('palette-tabs'),
             document.getElementById('palette-grid'),
             game,

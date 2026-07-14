@@ -266,6 +266,41 @@ html, body {
     min-height: 200px;
 }
 
+/* Theme switcher: a segmented control sitting above the category tabs.
+   Cream track, active segment lifts to paper + cobalt text — same visual
+   language as the .tab active state and the HUD toggles. */
+#palette-themes {
+    display: flex;
+    gap: 3px;
+    padding: 2px;
+    margin-bottom: 6px;
+    background: var(--cream-2);
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+.theme-btn {
+    flex: 1 1 0;
+    border: 0;
+    background: transparent;
+    padding: 5px 4px;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: var(--muted);
+    cursor: pointer;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.theme-btn:hover { color: var(--ink-soft); }
+.theme-btn.active {
+    background: var(--paper);
+    color: var(--cobalt);
+    box-shadow: var(--shadow);
+}
+
 #palette-tabs {
     display: flex;
     gap: 2px;
@@ -432,9 +467,84 @@ html, body {
 .toggle input:checked + .switch { background: #6ec07a; }
 .toggle input:checked + .switch::after { transform: translateX(10px); }
 
-.hud-layers {
-    display: none;
+.hud-layers { display: none; }
+
+/* World size + shape controls. */
+.hud-world {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px solid var(--line);
 }
+.hud-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.hud-field-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+/* Segmented control (grid size). Cream track, active segment lifts to
+   paper + cobalt — the same idiom as the palette theme switch. */
+.seg {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    background: var(--cream-2);
+    border-radius: 7px;
+}
+.seg-btn {
+    flex: 1 1 0;
+    border: 0;
+    background: transparent;
+    padding: 4px 2px;
+    border-radius: 5px;
+    font: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.seg-btn:hover { color: var(--ink-soft); }
+.seg-btn.active {
+    background: var(--paper);
+    color: var(--cobalt);
+    box-shadow: var(--shadow);
+}
+
+.hud-select {
+    width: 100%;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink);
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 5px 6px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image:
+        linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+        linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position:
+        calc(100% - 12px) calc(50% - 1px),
+        calc(100% - 8px) calc(50% - 1px);
+    background-size: 4px 4px, 4px 4px;
+    background-repeat: no-repeat;
+}
+.hud-select:hover { border-color: var(--cobalt); }
+.hud-select:focus { outline: none; border-color: var(--cobalt); }
 
 /* ── Instructions panel ────────────────────────────────────────── */
 

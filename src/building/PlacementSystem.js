@@ -19,7 +19,7 @@ export class PlacementSystem {
         if (!asset) return false;
 
         if (asset.kind === 'terrain') {
-            return this.tileMap.inBounds(gx, gy);
+            return this.tileMap.isLand(gx, gy);
         }
 
         // Object kind: footprint must fit and be free.

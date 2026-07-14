@@ -1,6 +1,6 @@
-# Mykonos Island Voxels
+# The Islander
 
-A browser-based isometric island builder styled after Mediterranean Mykonos. Pure HTML/CSS/ES modules — no bundler, no transpiler, no `node_modules`.
+A browser-based isometric island builder (branded **The Islander** in the UI; "Mykonos" is now just the default asset theme). Pure HTML/CSS/ES modules — no bundler, no transpiler, no `node_modules`. The `localStorage` save key still uses the old `mykonos-island-voxels` slug for back-compat — don't rename it.
 
 ## Tech Stack
 
@@ -62,13 +62,60 @@ netlify.toml            # Netlify config + cache headers
 - **Auto-save**: `localStorage` key `mykonos-island-voxels.save.v1` (from `config.js`).
 - **No external dependencies**: keep the runtime framework-free — this is a load-bearing constraint, not a preference.
 
+## World size & shape
+
+The island's **size** and **shape** are player-selectable at runtime from the HUD (bottom-right).
+
+- **Size** = the bounding grid, chosen from `CONFIG.grid.presets` (S 10², M 14² default, L 20², XL 26²).
+- **Shape** = a land mask carved inside that bounding box (`src/grid/islandShapes.js`: `computeMask(shapeId, W, H)` → `Uint8Array`; 11 shapes — Full, Square, Rectangle, L, Ring(O), C, Diamond, Cross(+), Round, Archipelago, Teardrop). Size and shape compose: the shape scales to whatever size is chosen.
+- `TileMap` owns the mask: `isLand(gx,gy)` is the buildability test (vs `inBounds`, which is just array bounds). `applyLayout(w,h,shape)` resizes/reshapes and **drops any terrain/objects that no longer sit on land**, returning the removed count. `layoutVersion` bumps on layout changes.
+- The renderer treats the whole grid square as the floating tile: land is the cream slab (`_traceLandPath`) and **every unoccupied cell is filled with sea** (`_traceCellUnion` with `!isLand`), so shapes read as real islands (Ring → lagoon, Archipelago → channels) and a Full island is unchanged (no unoccupied cells). The drop shadow is cast by the square; the grid is clipped to the land path. Platform cache is keyed on `layoutVersion`; a size change also recomputes world bounds and invalidates terrain/objects caches.
+- Shape is persisted in the save (`TileMap.serialize`); legacy saves default to `full`.
+
 ## Configuration (`src/config.js`)
 
-- Grid: 14×14 cells
+- Grid: 14×14 default (`grid.presets` S/M/L/XL; `grid.defaultShape`)
 - Tile: 64×32 px (classic 2:1 isometric)
 - Voxel: 4×4 per tile, 16px each
 - Camera zoom: 0.5–3.0, default 1.4
 - Layers: TERRAIN(0) / WATER(1) / OBJECT(2)
+
+## Asset Pipeline
+
+Every visible object is a hand-made transparent PNG (this is a hard project rule from `mykonos_voxel_builder_prompt.md`: no external art, no stock, no icon packs — all assets are generated specifically for this project). The runtime never generates final art; it only loads PNGs and, if one is missing, falls back to a procedural voxel builder so the editor keeps working during dev.
+
+**Data flow (PNG → screen):**
+
+1. **Author a PNG** in the Mykonos style — an isometric object on a transparent background. Convention: filename `gmk_<id>.png`, prefix `gmk_` = "generated Mykonos".
+2. **Source dirs**: cleaned originals live in `assets/raw/`; freshly generated art awaiting cleanup goes in `assets/raw_pending/`. Variants can sit in `assets/newAsset/`.
+3. **Trim** with `python3 tools/process_assets.py` (reads `raw/`, or `--pending` for `raw_pending/`). It only crops transparent borders — no recolor, no downscale. Output lands in `assets/<name>.png`. Background removal is done by hand before this step (deliberate quality bar).
+4. **Register** the asset in `src/assets/assetManifest.js` (the single source of truth).
+5. **Load**: `assetLoader.js` tries `assets/<filename>`, runs it through `imageToAsset.js` (trim → detect base/diamond geometry → infer anchor), then pre-renders a display canvas + pre-blurred cast-shadow canvas. On load failure it calls the manifest entry's `builder` (procedural fallback in `assetDefinitions.js` / `voxelRenderer.js`).
+6. **Display**: `AssetPalette.js` groups entries by `category` into the bottom palette tabs; the renderer places them by anchor.
+
+**Manifest entry fields** (see the header comment in `assetManifest.js` for the authoritative list):
+- `category`: `terrain` | `nature` | `props` | `water` | `buildings` — drives which palette tab it appears under.
+- `footprint {w,d}`: grid cells occupied (large buildings are multi-cell, e.g. villa 4×4).
+- `kind`: `terrain` (replaces the ground tile) vs `object` (sits on top).
+- `sizeScale`: fraction of the cell width the art occupies (decoupled from footprint — a jar on a 1×1 cell uses ~0.35).
+- `tileLike`: source PNG is a full iso voxel cube; strip its side-walls and reuse just the top diamond so adjacent tiles seam cleanly.
+- `fitCell`: scale the high-res PNG into the cell width without re-compositing.
+- `flatBase`: PNG has no painted slab — its bottom edge is the prop's feet; anchor at the cell's front corner.
+- `noShadow`: skip the projected cast shadow (PNG already bakes its own grounding shadow).
+- `shadowStyle`: `cast` (default silhouette projection) or `contact` (small grounding shadow under posts/fences).
+- `builder`: procedural fallback, only used when the PNG is missing.
+
+**Adding one asset (same theme):** author `gmk_<id>.png` → drop in `assets/raw_pending/` → `python3 tools/process_assets.py --pending` → add a one-line entry to `assetManifest.js` with the right category/footprint/flags. No code changes needed elsewhere; the palette and loader pick it up automatically. Optionally add a `builder` fallback in `assetDefinitions.js`.
+
+## Themes
+
+Assets are grouped into **themes** — parallel asset sets selectable at runtime from the segmented control at the top of the palette (`#palette-themes`, above the category tabs).
+
+- **Registry**: `THEMES` in `assetManifest.js`. Each theme has an `id`, display `name`, id `prefix`, and a `manifest`. `MYKONOS_MANIFEST` is the authored source of truth; `NORDIC_MANIFEST` is currently a **stub** derived by `deriveTheme()` — it clones the Mykonos entries under the `nord_` prefix but keeps them pointed at the same PNGs, so the switcher is fully functional before any bespoke Nordic art exists.
+- **Absolute ids (load-bearing invariant)**: every asset id carries its theme prefix (`gmk_house`, `nord_house`) — never bare. So a placed object or save always resolves to exactly the art it was made with, and a village may even mix themes. Consequently the loader eagerly loads **every** theme's assets at boot (`ALL_ASSETS`), and `ASSET_INDEX` spans all themes.
+- **Switching** (`Game.setTheme`) only changes what the palette offers and what *new* placements draw from — already-placed objects are untouched (no destructive re-theming). The current selection is re-anchored to the new theme's equivalent asset via `reThemeAssetId` (gmk_house → nord_house). The active theme is persisted in the save (`SaveSystem`) and restored on load.
+
+**Adding a real theme (e.g. Nordic art, desert):** draw a coherent PNG set in the new style, add the files as `assets/<prefix>_*.png`, and register a `THEMES` entry. For a genuinely distinct set, replace the `deriveTheme` stub with real per-entry `filename`s. Categories (`terrain/nature/props/water/buildings`) and all geometry conventions stay identical, so a theme is purely new PNGs + a manifest. Note the starter scene in `src/main.js` still hard-codes `gmk_*` ids for first-run — retheme it if the default should change.
 
 ## Build
 
@@ -94,6 +141,7 @@ python3 -m http.server 8000
 
 ## Contributing Rules
 
+- Record user-facing changes in `CHANGELOG.md` — business-oriented (Added / Changed / Designed), newest first. Update it as part of shipping a feature.
 - Keep it framework-free — no bundlers, transpilers, or `node_modules` in the runtime.
 - Keep the asset style coherent (cobalt-on-cream, soft shadows, elastic motion).
 - No per-frame `ctx.filter`, ImageBitmap shenanigans, or anything that breaks the renderer's caching invariants — they are load-bearing.

@@ -41,88 +41,158 @@ const W = O('water',  0.85);
 const B = O('buildings', 1);
 const TO = O('terrain', 1);
 
-export const ASSET_MANIFEST = [
+const MYKONOS_MANIFEST = [
     // ── TERRAIN ───────────────────────────────────────────────────
-    { ...T('grass',    'Grass'),     tileLike: true, builder: A.tileGrass },
-    { ...T('path',     'Path'),      tileLike: true, builder: A.tileStonePath },
-    { ...T('sand',     'Sand'),      tileLike: true, builder: A.tileSand },
-    { ...T('stone',    'Stone'),     tileLike: true, builder: A.tileWhiteStone },
-    { ...T('water',    'Water'),     tileLike: true, builder: A.tileWater },
-    { ...TO('stairs',   'Stairs'),   noShadow: true, builder: A.tileStairs },
-    { ...TO('sea_wall', 'Sea Wall', { w: 1, d: 1 }, 0.70), fitCell: true, flatBase: true, noShadow: true, builder: A.tileSeaWall },
+    { ...T('gmk_grass',    'Grass'),     tileLike: true, builder: A.tileGrass },
+    { ...T('gmk_path',     'Path'),      tileLike: true, builder: A.tileStonePath },
+    { ...T('gmk_sand',     'Sand'),      tileLike: true, builder: A.tileSand },
+    { ...T('gmk_stone',    'Stone'),     tileLike: true, builder: A.tileWhiteStone },
+    { ...T('gmk_water',    'Water'),     tileLike: true, builder: A.tileWater },
+    { ...TO('gmk_stairs',   'Stairs'),   noShadow: true, builder: A.tileStairs },
+    { ...TO('gmk_sea_wall', 'Sea Wall', { w: 1, d: 1 }, 0.70), fitCell: true, flatBase: true, noShadow: true, builder: A.tileSeaWall },
 
     // ── NATURE ────────────────────────────────────────────────────
-    { ...N('cypress',       'Cypress',       { w: 1, d: 1 }, 0.65), builder: A.cypressCluster },
-    { ...N('bougainvillea', 'Bougainvillea', { w: 1, d: 1 }, 0.80), builder: A.bougainvilleaTree },
-    { ...N('olive',         'Olive Tree',    { w: 1, d: 1 }, 0.90), builder: A.oliveTree },
-    { ...N('agave',         'Agave',         { w: 1, d: 1 }, 0.60), builder: A.agavePlant },
-    { ...N('dry_grass',     'Dry Grass',     { w: 1, d: 1 }, 0.55), builder: A.dryGrassTuft },
-    { ...N('flower_pot',    'Flower Pot',    { w: 1, d: 1 }, 0.35), builder: A.flowerPot },
+    { ...N('gmk_cypress',       'Cypress',       { w: 1, d: 1 }, 0.65), builder: A.cypressCluster },
+    { ...N('gmk_bougainvillea', 'Bougainvillea', { w: 1, d: 1 }, 0.80), builder: A.bougainvilleaTree },
+    { ...N('gmk_olive',         'Olive Tree',    { w: 1, d: 1 }, 0.90), builder: A.oliveTree },
+    { ...N('gmk_agave',         'Agave',         { w: 1, d: 1 }, 0.60), builder: A.agavePlant },
+    { ...N('gmk_dry_grass',     'Dry Grass',     { w: 1, d: 1 }, 0.55), builder: A.dryGrassTuft },
+    { ...N('gmk_flower_pot',    'Flower Pot',    { w: 1, d: 1 }, 0.35), builder: A.flowerPot },
 
     // ── PROPS ─────────────────────────────────────────────────────
     // Walls, railings, gates, archways — span the full cell because they
     // are architectural pieces meant to align with adjacent tiles.
-    { ...P('low_wall',        'Low Wall',        { w: 1, d: 1 }, 1.00), builder: A.lowWhiteWall },
-    { ...P('blue_railing',    'Blue Railing',    { w: 1, d: 1 }, 0.65), flatBase: true, shadowStyle: 'contact', builder: A.blueRailing },
-    { ...P('corner_wall',     'Corner Wall',     { w: 1, d: 1 }, 1.00), builder: A.cornerWall },
-    { ...P('gate_fence',      'Gate Fence',      { w: 1, d: 1 }, 0.70), flatBase: true, shadowStyle: 'contact', builder: A.woodenGateFence },
-    { ...P('archway',         'Archway',         { w: 1, d: 1 }, 0.90), builder: A.whiteArchway },
+    { ...P('gmk_low_wall',        'Low Wall',        { w: 1, d: 1 }, 1.00), builder: A.lowWhiteWall },
+    { ...P('gmk_blue_railing',    'Blue Railing',    { w: 1, d: 1 }, 0.65), flatBase: true, shadowStyle: 'contact', builder: A.blueRailing },
+    { ...P('gmk_corner_wall',     'Corner Wall',     { w: 1, d: 1 }, 1.00), builder: A.cornerWall },
+    { ...P('gmk_gate_fence',      'Gate Fence',      { w: 1, d: 1 }, 0.70), flatBase: true, shadowStyle: 'contact', builder: A.woodenGateFence },
+    { ...P('gmk_archway',         'Archway',         { w: 1, d: 1 }, 0.90), builder: A.whiteArchway },
 
     // Lanterns and posts — narrow vertical features, ~half cell footprint.
-    { ...P('lantern_post',    'Lantern Post',    { w: 1, d: 1 }, 0.45), builder: A.lanternPost },
-    { ...P('stone_lantern',   'Stone Lantern',   { w: 1, d: 1 }, 0.40), builder: A.stoneLantern },
-    { ...P('hanging_lantern', 'Hanging Lantern', { w: 1, d: 1 }, 0.40), builder: A.hangingLantern },
+    { ...P('gmk_lantern_post',    'Lantern Post',    { w: 1, d: 1 }, 0.45), builder: A.lanternPost },
+    { ...P('gmk_stone_lantern',   'Stone Lantern',   { w: 1, d: 1 }, 0.40), builder: A.stoneLantern },
+    { ...P('gmk_hanging_lantern', 'Hanging Lantern', { w: 1, d: 1 }, 0.40), builder: A.hangingLantern },
 
     // Furniture / structures the player interacts with — chunky but not
     // cell-sized.
-    { ...P('bench',           'Bench',           { w: 1, d: 1 }, 0.50), builder: A.blueBench },
-    { ...P('signpost',        'Signpost',        { w: 1, d: 1 }, 0.40), builder: A.signpost },
-    { ...P('banner',          'Banner',          { w: 1, d: 1 }, 0.45), builder: A.bannerFlag },
+    { ...P('gmk_bench',           'Bench',           { w: 1, d: 1 }, 0.50), builder: A.blueBench },
+    { ...P('gmk_signpost',        'Signpost',        { w: 1, d: 1 }, 0.40), builder: A.signpost },
+    { ...P('gmk_banner',          'Banner',          { w: 1, d: 1 }, 0.45), builder: A.bannerFlag },
 
     // Carry-able decorations — small.
-    { ...P('crate',           'Crate',           { w: 1, d: 1 }, 0.50), builder: A.woodenCrate },
-    { ...P('hay_bale',        'Hay Bale',        { w: 1, d: 1 }, 0.55), builder: A.hayBale },
-    { ...P('storage_box',     'Storage Box',     { w: 1, d: 1 }, 0.55), builder: A.storageBox },
-    { ...P('wood_pile',       'Wood Pile',       { w: 1, d: 1 }, 0.55), builder: A.woodPile },
-    { ...P('water_bucket',    'Water Bucket',    { w: 1, d: 1 }, 0.35), builder: A.waterBucket },
-    { ...P('pottery_jar',     'Pottery Jar',     { w: 1, d: 1 }, 0.35), builder: A.potteryJar },
-    { ...P('terracotta_pot',  'Plant Pot',       { w: 1, d: 1 }, 0.30), builder: A.terracottaPot },
-    { ...P('stone_basin',     'Stone Basin',     { w: 1, d: 1 }, 0.50), builder: A.stoneBasin },
+    { ...P('gmk_crate',           'Crate',           { w: 1, d: 1 }, 0.50), builder: A.woodenCrate },
+    { ...P('gmk_hay_bale',        'Hay Bale',        { w: 1, d: 1 }, 0.55), builder: A.hayBale },
+    { ...P('gmk_storage_box',     'Storage Box',     { w: 1, d: 1 }, 0.55), builder: A.storageBox },
+    { ...P('gmk_wood_pile',       'Wood Pile',       { w: 1, d: 1 }, 0.55), builder: A.woodPile },
+    { ...P('gmk_water_bucket',    'Water Bucket',    { w: 1, d: 1 }, 0.35), builder: A.waterBucket },
+    { ...P('gmk_pottery_jar',     'Pottery Jar',     { w: 1, d: 1 }, 0.35), builder: A.potteryJar },
+    { ...P('gmk_terracotta_pot',  'Plant Pot',       { w: 1, d: 1 }, 0.30), builder: A.terracottaPot },
+    { ...P('gmk_stone_basin',     'Stone Basin',     { w: 1, d: 1 }, 0.50), builder: A.stoneBasin },
 
     // Rock clutter — small, scattered.
-    { ...P('rocks',           'Rocks',           { w: 1, d: 1 }, 0.55), builder: A.rockCluster },
-    { ...P('large_rock',      'Large Rock',      { w: 1, d: 1 }, 0.65), builder: A.largeRock },
-    { ...P('mossy_stone',     'Mossy Stone',     { w: 1, d: 1 }, 0.45), builder: A.mossyStone },
-    { ...P('flat_stone',      'Flat Stone',      { w: 1, d: 1 }, 0.45), builder: A.flatStone },
-    { ...P('pebbles',         'Pebbles',         { w: 1, d: 1 }, 0.45), builder: A.pebbles },
-    { ...P('stone_pile',      'Stone Pile',      { w: 1, d: 1 }, 0.55), builder: A.stonePile },
-    { ...P('boulder',         'Boulder',         { w: 1, d: 1 }, 0.75), builder: A.boulder },
+    { ...P('gmk_rocks',           'Rocks',           { w: 1, d: 1 }, 0.55), builder: A.rockCluster },
+    { ...P('gmk_large_rock',      'Large Rock',      { w: 1, d: 1 }, 0.65), builder: A.largeRock },
+    { ...P('gmk_mossy_stone',     'Mossy Stone',     { w: 1, d: 1 }, 0.45), builder: A.mossyStone },
+    { ...P('gmk_flat_stone',      'Flat Stone',      { w: 1, d: 1 }, 0.45), builder: A.flatStone },
+    { ...P('gmk_pebbles',         'Pebbles',         { w: 1, d: 1 }, 0.45), builder: A.pebbles },
+    { ...P('gmk_stone_pile',      'Stone Pile',      { w: 1, d: 1 }, 0.55), builder: A.stonePile },
+    { ...P('gmk_boulder',         'Boulder',         { w: 1, d: 1 }, 0.75), builder: A.boulder },
 
     // ── WATER FEATURES ────────────────────────────────────────────
-    { ...W('small_bridge', 'Bridge',     { w: 2, d: 1 }, 0.95), builder: A.smallBridge },
-    { ...W('well',         'Well',       { w: 1, d: 1 }, 0.55), builder: A.well },
+    { ...W('gmk_small_bridge', 'Bridge',     { w: 2, d: 1 }, 0.95), builder: A.smallBridge },
+    { ...W('gmk_well',         'Well',       { w: 1, d: 1 }, 0.55), builder: A.well },
     // Garden beds and crop patches already include their own box/slab depth
     // in the PNG. Keep them intact and anchor their painted bottom edge to
     // the cell front corner so they sit on, not above, the highlighted cell.
-    { ...W('garden_bed',   'Garden Bed', { w: 1, d: 1 }, 0.95), filename: 'newAsset/Garden Bed.png', fitCell: true, flatBase: true, noShadow: true, builder: A.plantedGardenBed },
-    { ...W('crop_patch',   'Crop Patch', { w: 1, d: 1 }, 0.95), filename: 'newAsset/Crop Patch.png', fitCell: true, flatBase: true, noShadow: true, builder: A.cropPatch },
-    { ...W('veg_garden',   'Veg Garden', { w: 1, d: 1 }, 0.95), filename: 'newAsset/Veg Garden.png', fitCell: true, flatBase: true, noShadow: true, builder: A.vegetableGarden },
+    { ...W('gmk_garden_bed',   'Garden Bed', { w: 1, d: 1 }, 0.95), filename: 'newAsset/gmk_garden_bed.png', fitCell: true, flatBase: true, noShadow: true, builder: A.plantedGardenBed },
+    { ...W('gmk_crop_patch',   'Crop Patch', { w: 1, d: 1 }, 0.95), filename: 'newAsset/gmk_crop_patch.png', fitCell: true, flatBase: true, noShadow: true, builder: A.cropPatch },
+    { ...W('gmk_veg_garden',   'Veg Garden', { w: 1, d: 1 }, 0.95), filename: 'newAsset/gmk_veg_garden.png', fitCell: true, flatBase: true, noShadow: true, builder: A.vegetableGarden },
 
     // ── BUILDINGS ─────────────────────────────────────────────────
-    { ...B('house',         'House',         { w: 2, d: 2 }), builder: A.smallMykonosHouse },
-    { ...B('two_story',     'Two-Story',     { w: 3, d: 3 }), builder: A.twoStoryHouse },
-    { ...B('cube_house',    'Cube House',    { w: 2, d: 2 }), builder: A.whiteCubeHouse },
-    { ...B('terrace_house', 'Terrace House', { w: 3, d: 2 }), builder: A.terraceHouse },
-    { ...B('pergola_house', 'Pergola House', { w: 3, d: 3 }), builder: A.pergolaHouse },
-    { ...B('villa',         'Main Villa',    { w: 4, d: 4 }), builder: A.mainVilla },
-    { ...B('altar',         'Altar',         { w: 2, d: 2 }), builder: A.smallChapelAltar },
-    { ...B('tower_chapel',  'Tower Chapel',  { w: 2, d: 2 }), builder: A.towerChapel },
-    { ...B('main_chapel',   'Main Chapel',   { w: 3, d: 3 }), builder: A.mainChapel },
-    { ...B('windmill',      'Windmill',      { w: 2, d: 2 }), builder: A.windmillBuilding },
+    { ...B('gmk_house',         'House',         { w: 2, d: 2 }), builder: A.smallMykonosHouse },
+    { ...B('gmk_two_story',     'Two-Story',     { w: 3, d: 3 }), builder: A.twoStoryHouse },
+    { ...B('gmk_cube_house',    'Cube House',    { w: 2, d: 2 }), builder: A.whiteCubeHouse },
+    { ...B('gmk_terrace_house', 'Terrace House', { w: 3, d: 2 }), builder: A.terraceHouse },
+    { ...B('gmk_pergola_house', 'Pergola House', { w: 3, d: 3 }), builder: A.pergolaHouse },
+    { ...B('gmk_villa',         'Main Villa',    { w: 4, d: 4 }), builder: A.mainVilla },
+    { ...B('gmk_altar',         'Altar',         { w: 2, d: 2 }), builder: A.smallChapelAltar },
+    { ...B('gmk_tower_chapel',  'Tower Chapel',  { w: 2, d: 2 }), builder: A.towerChapel },
+    { ...B('gmk_main_chapel',   'Main Chapel',   { w: 3, d: 3 }), builder: A.mainChapel },
+    { ...B('gmk_windmill',      'Windmill',      { w: 2, d: 2 }), builder: A.windmillBuilding },
 ];
 
+/**
+ * ── THEMES ─────────────────────────────────────────────────────────
+ *
+ * A theme bundles a full parallel asset set. Every theme has a distinct id
+ * prefix, and asset ids are ABSOLUTE (`gmk_house`, `nord_house`) — never
+ * bare. That's the load-bearing invariant: a placed object or a save file
+ * always resolves to exactly the art it was made with, no matter which
+ * theme happens to be active in the palette. Because of it, a village can
+ * even mix assets from several themes, and rendering just works — which is
+ * why the loader eagerly loads *every* theme's assets at boot (see
+ * `ALL_ASSETS`).
+ *
+ * Nordic is currently a STUB: `deriveTheme` clones the Mykonos entries under
+ * the `nord_` prefix but keeps them pointed at the same PNGs, so the theme
+ * switcher is fully functional before any bespoke Nordic art exists. To ship
+ * real Nordic art: add `assets/nord_*.png` files and change `deriveTheme` to
+ * rewrite each `filename` to the new id instead of reusing the source's.
+ */
+const MYKONOS_PREFIX = 'gmk_';
+const NORDIC_PREFIX  = 'nord_';
+
+function deriveTheme(baseManifest, prefix) {
+    return baseManifest.map(entry => ({
+        ...entry,
+        id: prefix + entry.id.slice(MYKONOS_PREFIX.length),
+        // Stub: reuse the Mykonos source PNG until real art is drawn.
+        filename: entry.filename,
+    }));
+}
+
+const NORDIC_MANIFEST = deriveTheme(MYKONOS_MANIFEST, NORDIC_PREFIX);
+
+export const THEMES = Object.freeze([
+    { id: 'mykonos', name: 'Mykonos', prefix: MYKONOS_PREFIX, manifest: MYKONOS_MANIFEST },
+    { id: 'nordic',  name: 'Nordic',  prefix: NORDIC_PREFIX,  manifest: NORDIC_MANIFEST },
+]);
+
+export const DEFAULT_THEME_ID = 'mykonos';
+
+export const THEME_INDEX = Object.freeze(
+    THEMES.reduce((acc, t) => { acc[t.id] = t; return acc; }, {})
+);
+
+/** The asset list for one theme (falls back to the first theme). */
+export function getThemeManifest(themeId) {
+    return (THEME_INDEX[themeId] ?? THEMES[0]).manifest;
+}
+
+/**
+ * Map an asset id onto its equivalent in `targetThemeId` (gmk_house →
+ * nord_house), so switching themes keeps the player's current selection
+ * pointing at "the same thing". Returns the input unchanged when there is
+ * no equivalent in the target theme.
+ */
+export function reThemeAssetId(assetId, targetThemeId) {
+    const target = THEME_INDEX[targetThemeId];
+    if (!target || assetId == null) return assetId;
+    for (const t of THEMES) {
+        if (assetId.startsWith(t.prefix)) {
+            const candidate = target.prefix + assetId.slice(t.prefix.length);
+            return ASSET_INDEX[candidate] ? candidate : assetId;
+        }
+    }
+    return assetId;
+}
+
+// Flattened across all themes — this is what the loader ingests so every
+// theme's art is ready before the first frame.
+export const ALL_ASSETS = THEMES.flatMap(t => t.manifest);
+
 export const ASSET_INDEX = Object.freeze(
-    ASSET_MANIFEST.reduce((acc, a) => { acc[a.id] = a; return acc; }, {})
+    ALL_ASSETS.reduce((acc, a) => { acc[a.id] = a; return acc; }, {})
 );
 
 export const CATEGORIES = ['terrain', 'nature', 'props', 'water', 'buildings'];
