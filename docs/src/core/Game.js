@@ -16,7 +16,7 @@ import {
     ASSET_INDEX,
     THEME_INDEX,
     DEFAULT_THEME_ID,
-    getThemeManifest,
+    assetsForCategory,
     reThemeAssetId,
 } from '../assets/assetManifest.js';
 import { SaveSystem } from '../storage/SaveSystem.js';
@@ -41,8 +41,7 @@ export class Game {
         this.tool = 'place';                  // 'place' | 'erase' | 'pan'
         this.category = 'terrain';
         this.theme = DEFAULT_THEME_ID;         // active palette theme
-        this.selectedAssetId = getThemeManifest(this.theme)
-            .find(a => a.category === 'terrain').id;
+        this.selectedAssetId = assetsForCategory('terrain', this.theme)[0].id;
         this.ui = ui;
 
         // Preview-only flip state for the current selection. Toggled by the
@@ -80,8 +79,9 @@ export class Game {
     setCategory(cat) {
         if (this.category === cat) return;
         this.category = cat;
-        // Auto-select first asset of that category (within the active theme).
-        const first = getThemeManifest(this.theme).find(a => a.category === cat);
+        // Auto-select first asset of that category. Terrain/Nature come from
+        // the shared neutral set; everything else from the active theme.
+        const first = assetsForCategory(cat, this.theme)[0];
         if (first) this.selectedAssetId = first.id;
         this._resetFlip();
         this.renderer.markDirty();
@@ -125,10 +125,10 @@ export class Game {
         if (this.theme === themeId || !THEME_INDEX[themeId]) return;
         this.theme = themeId;
         const remapped = reThemeAssetId(this.selectedAssetId, themeId);
-        const manifest = getThemeManifest(themeId);
         this.selectedAssetId = ASSET_INDEX[remapped]
             ? remapped
-            : (manifest.find(a => a.category === this.category) ?? manifest[0]).id;
+            : (assetsForCategory(this.category, themeId)[0]
+                ?? assetsForCategory('buildings', themeId)[0]).id;
         this._resetFlip();
         if (this.tool === 'erase') this.setTool('place');
         this.renderer.markDirty();
@@ -247,14 +247,14 @@ export class Game {
         for (let gy = 0; gy < H; gy++)
         for (let gx = 0; gx < W; gx++) {
             if (this.tileMap.getTerrain(gx, gy)) continue;
-            if (this.placeAndAnimate('gmk_grass', gx, gy, { delay: (gx + gy) * STEP_MS })) {
+            if (this.placeAndAnimate('grass', gx, gy, { delay: (gx + gy) * STEP_MS })) {
                 filled++;
             }
         }
         if (filled > 0) {
             // One sound at the start; the per-tile placement audio path
             // would fire ~196 times in a fraction of a second otherwise.
-            playPlacementFor('gmk_grass');
+            playPlacementFor('grass');
             this.ui?.showToast(`Filled ${filled} ${filled === 1 ? 'tile' : 'tiles'} with grass`);
         } else {
             this.ui?.showToast('Grid already covered');

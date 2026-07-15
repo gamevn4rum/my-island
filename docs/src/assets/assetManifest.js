@@ -41,24 +41,35 @@ const W = O('water',  0.85);
 const B = O('buildings', 1);
 const TO = O('terrain', 1);
 
-const MYKONOS_MANIFEST = [
+/**
+ * ── NEUTRAL (theme-independent) ────────────────────────────────────
+ *
+ * Terrain and Nature are a SHARED set with BARE ids (no theme prefix).
+ * Ground tiles and plants look the same across themes, so switching the
+ * palette theme leaves them untouched — they live in their own palette
+ * section and never carry a `gmk_`/`nord_` prefix. This is the one
+ * deliberate exception to the "ids always carry a theme prefix" rule.
+ */
+const NEUTRAL_MANIFEST = [
     // ── TERRAIN ───────────────────────────────────────────────────
-    { ...T('gmk_grass',    'Grass'),     tileLike: true, builder: A.tileGrass },
-    { ...T('gmk_path',     'Path'),      tileLike: true, builder: A.tileStonePath },
-    { ...T('gmk_sand',     'Sand'),      tileLike: true, builder: A.tileSand },
-    { ...T('gmk_stone',    'Stone'),     tileLike: true, builder: A.tileWhiteStone },
-    { ...T('gmk_water',    'Water'),     tileLike: true, builder: A.tileWater },
-    { ...TO('gmk_stairs',   'Stairs'),   noShadow: true, builder: A.tileStairs },
-    { ...TO('gmk_sea_wall', 'Sea Wall', { w: 1, d: 1 }, 0.70), fitCell: true, flatBase: true, noShadow: true, builder: A.tileSeaWall },
+    { ...T('grass',    'Grass'),     tileLike: true, builder: A.tileGrass },
+    { ...T('path',     'Path'),      tileLike: true, builder: A.tileStonePath },
+    { ...T('sand',     'Sand'),      tileLike: true, builder: A.tileSand },
+    { ...T('stone',    'Stone'),     tileLike: true, builder: A.tileWhiteStone },
+    { ...T('water',    'Water'),     tileLike: true, builder: A.tileWater },
+    { ...TO('stairs',   'Stairs'),   noShadow: true, builder: A.tileStairs },
+    { ...TO('sea_wall', 'Sea Wall', { w: 1, d: 1 }, 0.70), fitCell: true, flatBase: true, noShadow: true, builder: A.tileSeaWall },
 
     // ── NATURE ────────────────────────────────────────────────────
-    { ...N('gmk_cypress',       'Cypress',       { w: 1, d: 1 }, 0.65), builder: A.cypressCluster },
-    { ...N('gmk_bougainvillea', 'Bougainvillea', { w: 1, d: 1 }, 0.80), builder: A.bougainvilleaTree },
-    { ...N('gmk_olive',         'Olive Tree',    { w: 1, d: 1 }, 0.90), builder: A.oliveTree },
-    { ...N('gmk_agave',         'Agave',         { w: 1, d: 1 }, 0.60), builder: A.agavePlant },
-    { ...N('gmk_dry_grass',     'Dry Grass',     { w: 1, d: 1 }, 0.55), builder: A.dryGrassTuft },
-    { ...N('gmk_flower_pot',    'Flower Pot',    { w: 1, d: 1 }, 0.35), builder: A.flowerPot },
+    { ...N('cypress',       'Cypress',       { w: 1, d: 1 }, 0.65), builder: A.cypressCluster },
+    { ...N('bougainvillea', 'Bougainvillea', { w: 1, d: 1 }, 0.80), builder: A.bougainvilleaTree },
+    { ...N('olive',         'Olive Tree',    { w: 1, d: 1 }, 0.90), builder: A.oliveTree },
+    { ...N('agave',         'Agave',         { w: 1, d: 1 }, 0.60), builder: A.agavePlant },
+    { ...N('dry_grass',     'Dry Grass',     { w: 1, d: 1 }, 0.55), builder: A.dryGrassTuft },
+    { ...N('flower_pot',    'Flower Pot',    { w: 1, d: 1 }, 0.35), builder: A.flowerPot },
+];
 
+const MYKONOS_MANIFEST = [
     // ── PROPS ─────────────────────────────────────────────────────
     // Walls, railings, gates, archways — span the full cell because they
     // are architectural pieces meant to align with adjacent tiles.
@@ -213,14 +224,39 @@ export function themeOfAssetId(assetId) {
     return null;
 }
 
-// Flattened across all themes. Still the union of every theme's entries —
-// `ASSET_INDEX` must span all themes so any placed/saved id resolves to its
-// manifest entry even before that theme's *art* is loaded (the loader now
-// brings in art lazily; the metadata index stays complete).
-export const ALL_ASSETS = THEMES.flatMap(t => t.manifest);
+// The shared, theme-independent terrain + nature set (bare ids).
+export { NEUTRAL_MANIFEST };
+
+// Flattened across the neutral set + every theme. `ASSET_INDEX` must span all
+// of them so any placed/saved id resolves to its manifest entry even before a
+// theme's *art* is loaded (the loader brings in art lazily; the metadata index
+// stays complete). Neutral ids are bare; themed ids carry their prefix.
+export const ALL_ASSETS = [...NEUTRAL_MANIFEST, ...THEMES.flatMap(t => t.manifest)];
 
 export const ASSET_INDEX = Object.freeze(
     ALL_ASSETS.reduce((acc, a) => { acc[a.id] = a; return acc; }, {})
 );
 
 export const CATEGORIES = ['terrain', 'nature', 'props', 'water', 'buildings'];
+
+// Categories drawn from the shared neutral set vs. the active theme. The
+// palette renders neutral categories in their own section, unaffected by the
+// theme switcher; themed categories swap with the active theme.
+export const NEUTRAL_CATEGORIES = ['terrain', 'nature'];
+export const THEMED_CATEGORIES = ['buildings', 'water', 'props'];
+
+export function isNeutralCategory(category) {
+    return NEUTRAL_CATEGORIES.includes(category);
+}
+
+/**
+ * The asset entries to show for a category: the shared neutral set for
+ * terrain/nature (theme-independent), or the active theme's manifest for
+ * everything else.
+ */
+export function assetsForCategory(category, themeId) {
+    const source = isNeutralCategory(category)
+        ? NEUTRAL_MANIFEST
+        : getThemeManifest(themeId);
+    return source.filter(a => a.category === category);
+}

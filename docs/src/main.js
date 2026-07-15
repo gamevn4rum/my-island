@@ -91,22 +91,22 @@ function seedExampleVillage(game) {
     // Grass everywhere
     for (let gy = 0; gy < H; gy++)
     for (let gx = 0; gx < W; gx++) {
-        placeT('gmk_grass', gx, gy);
+        placeT('grass', gx, gy);
     }
 
     // Stone path crossing
     const midX = Math.floor(W / 2);
     const midY = Math.floor(H / 2);
-    for (let gx = 1; gx < W - 1; gx++) placeT('gmk_path', gx, midY);
-    for (let gy = 1; gy < H - 1; gy++) placeT('gmk_path', midX, gy);
+    for (let gx = 1; gx < W - 1; gx++) placeT('path', gx, midY);
+    for (let gy = 1; gy < H - 1; gy++) placeT('path', midX, gy);
 
     // Water canal along the front edge
     for (let gx = 0; gx < W; gx++) {
-        placeT('gmk_water', gx, H - 1);
-        placeT('gmk_water', gx, H - 2);
+        placeT('water', gx, H - 1);
+        placeT('water', gx, H - 2);
     }
     // Sand strip just behind the water as beach
-    for (let gx = 0; gx < W; gx++) placeT('gmk_sand', gx, H - 3);
+    for (let gx = 0; gx < W; gx++) placeT('sand', gx, H - 3);
 
     // A house and chapel
     placeO('gmk_house', 2, 2);
@@ -115,14 +115,14 @@ function seedExampleVillage(game) {
     placeO('gmk_two_story', 2, 7);
     placeO('gmk_villa', 7, 7);
 
-    // Some nature accents
-    placeO('gmk_cypress', 1, 5);
-    placeO('gmk_cypress', 12, 5);
-    placeO('gmk_bougainvillea', 5, 3);
-    placeO('gmk_olive', 0, 9);
-    placeO('gmk_flower_pot', 6, 5);
+    // Some nature accents (neutral, bare ids)
+    placeO('cypress', 1, 5);
+    placeO('cypress', 12, 5);
+    placeO('bougainvillea', 5, 3);
+    placeO('olive', 0, 9);
+    placeO('flower_pot', 6, 5);
     placeO('gmk_terracotta_pot', 11, 6);
-    placeO('gmk_agave', 13, 8);
+    placeO('agave', 13, 8);
 
     // Lanterns + small bridge
     placeO('gmk_lantern_post', 4, 6);

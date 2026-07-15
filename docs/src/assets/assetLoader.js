@@ -17,6 +17,7 @@
 import {
     THEME_INDEX,
     getThemeManifest,
+    NEUTRAL_MANIFEST,
 } from './assetManifest.js';
 import { imageToAsset, loadImageElement } from './imageToAsset.js';
 import { renderVoxels } from './voxelRenderer.js';
@@ -131,8 +132,13 @@ export function isThemeLoaded(themeId) {
 export async function loadThemes(themeIds, onProgress = () => {}) {
     if (!_assets) _assets = {};
 
-    // Collect the not-yet-built entries across the requested themes.
+    // Collect the not-yet-built entries. The shared neutral set (terrain +
+    // nature) is theme-independent, so it's always brought in — built once on
+    // the first call, then skipped (already in `_assets`) on lazy theme loads.
     const entries = [];
+    for (const entry of NEUTRAL_MANIFEST) {
+        if (!_assets[entry.id]) entries.push(entry);
+    }
     for (const themeId of themeIds) {
         if (!THEME_INDEX[themeId] || _loadedThemes.has(themeId)) continue;
         for (const entry of getThemeManifest(themeId)) {
