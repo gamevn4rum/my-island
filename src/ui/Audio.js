@@ -136,8 +136,8 @@ export function playTreePlacement(volume = 0.6)        { play('placementTree',  
  * `playPlacementFor` lookup.
  */
 const STONE_ASSET_IDS = new Set([
-    // Terrain
-    'gmk_stone', 'gmk_path', 'gmk_sea_wall', 'gmk_stairs',
+    // Terrain (neutral, bare ids)
+    'stone', 'path', 'sea_wall', 'stairs',
     // Walls / arches / lanterns / basins
     'gmk_low_wall', 'gmk_corner_wall', 'gmk_archway',
     'gmk_stone_lantern', 'gmk_stone_basin', 'gmk_well',
@@ -173,8 +173,9 @@ const WOOD_ASSET_IDS = new Set([
  * (succulents, grass tufts, potted flowers).
  */
 const SMALL_VEG_ASSET_IDS = new Set([
-    'gmk_grass',
-    'gmk_agave', 'gmk_dry_grass', 'gmk_flower_pot', 'gmk_terracotta_pot',
+    // grass terrain + low plants are neutral (bare ids); the plant pot is a prop.
+    'grass',
+    'agave', 'dry_grass', 'flower_pot', 'gmk_terracotta_pot',
 ]);
 
 /**
@@ -182,7 +183,7 @@ const SMALL_VEG_ASSET_IDS = new Set([
  * tree whoosh. Reserved for full trees and tall flowering plants.
  */
 const LARGE_VEG_ASSET_IDS = new Set([
-    'gmk_cypress', 'gmk_olive', 'gmk_bougainvillea',
+    'cypress', 'olive', 'bougainvillea',
 ]);
 
 /**
@@ -198,7 +199,7 @@ const LARGE_VEG_ASSET_IDS = new Set([
  * asset taxonomy.
  */
 export function playPlacementFor(assetId) {
-    if (assetId === 'gmk_water') {
+    if (assetId === 'water') {
         playWaterPlacement();
         return;
     }

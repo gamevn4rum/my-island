@@ -17,6 +17,12 @@ adopts a formal release process.
   loads, with a music toggle in the top-left title card to pause or resume it.
 
 ### Changed
+- **Terrain & Nature are now theme-neutral.** Ground tiles and plants are a
+  single shared set that no longer changes with the theme. The palette is split
+  into two sections: a themed section on top (theme switcher + Buildings, Water,
+  Props) and a neutral section beneath it (Terrain, Nature). Switching themes
+  leaves your terrain and greenery — and the palette's bottom section —
+  untouched. Existing islands are migrated automatically.
 - **Faster startup.** The opening load now only prepares the theme your island
   actually uses instead of every theme up front; other themes load the moment
   you switch to one. Shared artwork is also reused rather than re-processed, so
@@ -35,8 +41,9 @@ adopts a formal release process.
 - **More bespoke Nordic art.** The Nordic theme now ships with its own
   hand-made pieces — **House, Cube House, Terrace House, Two-Story, Altar,
   Tower Chapel, Blue Railing,** and **Gate Fence** — instead of borrowing the
-  Mykonos look. The rest of the Nordic set continues to reuse Mykonos art
-  until it's drawn.
+  Mykonos look. These eight were redrawn with cleaner cutouts for crisper,
+  tighter-cropped placement. The rest of the Nordic set continues to reuse
+  Mykonos art until it's drawn.
 
 ---
 

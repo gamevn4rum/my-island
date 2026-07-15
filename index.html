@@ -46,9 +46,15 @@
         <aside id="toolbar"></aside>
 
         <section id="palette">
-            <div id="palette-themes" role="group" aria-label="Theme"></div>
-            <nav id="palette-tabs"></nav>
-            <div id="palette-grid"></div>
+            <div id="palette-themed" class="palette-section">
+                <div id="palette-themes" role="group" aria-label="Theme"></div>
+                <nav id="palette-tabs" aria-label="Themed categories"></nav>
+                <div id="palette-grid" class="palette-grid"></div>
+            </div>
+            <div id="palette-neutral" class="palette-section">
+                <nav id="palette-neutral-tabs" aria-label="Terrain and nature"></nav>
+                <div id="palette-neutral-grid" class="palette-grid"></div>
+            </div>
         </section>
 
         <section id="hud">

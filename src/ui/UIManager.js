@@ -17,6 +17,8 @@ export class UIManager {
             document.getElementById('palette-themes'),
             document.getElementById('palette-tabs'),
             document.getElementById('palette-grid'),
+            document.getElementById('palette-neutral-tabs'),
+            document.getElementById('palette-neutral-grid'),
             game,
         );
         this.hud = new HUD(game);

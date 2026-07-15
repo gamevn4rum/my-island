@@ -266,6 +266,22 @@ html, body {
     min-height: 200px;
 }
 
+/* The palette stacks two sections: themed (theme switcher + Buildings/Water/
+   Props) takes the top 2/3, neutral (Terrain/Nature, theme-independent) the
+   bottom 1/3. Each is a flex column so its own swatch grid scrolls. */
+.palette-section {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+#palette-themed  { flex: 2 1 0; }
+#palette-neutral {
+    flex: 1 1 0;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--line);
+}
+
 /* Theme switcher: a segmented control sitting above the category tabs.
    Cream track, active segment lifts to paper + cobalt text — same visual
    language as the .tab active state and the HUD toggles. */
@@ -301,12 +317,10 @@ html, body {
     box-shadow: var(--shadow);
 }
 
-#palette-tabs {
+#palette-tabs, #palette-neutral-tabs {
     display: flex;
-    /* Five categories don't fit the narrow palette on one row. Wrapping to
-       two rows keeps every tab visible; the previous overflow-x:auto hid the
-       last tabs (Water, Buildings) behind a scrollbar we'd deliberately
-       hidden, so they were effectively unreachable. */
+    /* Tabs wrap rather than hide behind an overflow scrollbar, so every
+       category in the section stays reachable in the narrow palette. */
     flex-wrap: wrap;
     gap: 2px;
     padding: 0 2px 4px;
@@ -336,7 +350,7 @@ html, body {
     margin-bottom: -1px;
 }
 
-#palette-grid {
+.palette-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 4px;
@@ -348,8 +362,8 @@ html, body {
     flex: 1 1 auto;
     align-content: start;
 }
-#palette-grid::-webkit-scrollbar { width: 4px; }
-#palette-grid::-webkit-scrollbar-thumb { background: var(--line); border-radius: 2px; }
+.palette-grid::-webkit-scrollbar { width: 4px; }
+.palette-grid::-webkit-scrollbar-thumb { background: var(--line); border-radius: 2px; }
 
 .swatch {
     background: var(--cream);
@@ -673,9 +687,9 @@ html, body {
         right: 16px;
         top: auto;
         bottom: calc(16px + env(safe-area-inset-bottom));
-        height: 180px;
+        height: 240px;
     }
-    #palette-grid {
+    .palette-grid {
         grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
     }
     /* HUD is duplicate info on small screens — palette dominates the
@@ -684,7 +698,7 @@ html, body {
        it lifts up to clear the bottom palette. */
     #hud { display: none; }
     #instructions {
-        bottom: calc(180px + 24px + env(safe-area-inset-bottom));
+        bottom: calc(240px + 24px + env(safe-area-inset-bottom));
     }
     /* Open state on narrow screens: cap the height so the cheatsheet
        can scroll instead of pushing offscreen. */
@@ -759,10 +773,10 @@ html, body {
         right: calc(8px + env(safe-area-inset-right));
         width: auto;
         bottom: calc(8px + env(safe-area-inset-bottom));
-        height: 200px;
+        height: 280px;
         padding: 4px 6px 6px;
     }
-    #palette-tabs {
+    #palette-tabs, #palette-neutral-tabs {
         gap: 4px;
         padding: 2px 2px 4px;
     }
@@ -771,7 +785,7 @@ html, body {
         padding: 6px 10px;
         min-height: 32px;
     }
-    #palette-grid {
+    .palette-grid {
         grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
         gap: 6px;
     }
@@ -784,7 +798,7 @@ html, body {
        spill off the top of the screen. */
     #instructions {
         left: calc(8px + env(safe-area-inset-left));
-        bottom: calc(200px + 16px + env(safe-area-inset-bottom));
+        bottom: calc(280px + 16px + env(safe-area-inset-bottom));
         max-width: calc(100vw - 16px - env(safe-area-inset-left) - env(safe-area-inset-right));
     }
     .ins-summary {
@@ -815,10 +829,10 @@ html, body {
 @media (max-width: 380px) {
     .tool { width: 46px; padding: 6px 3px; }
     .tool .ti { width: 28px; height: 28px; }
-    #palette { height: 184px; }
-    #palette-grid { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
+    #palette { height: 244px; }
+    .palette-grid { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
     .swatch canvas, .swatch img { width: 38px; height: 38px; }
-    #instructions { bottom: calc(184px + 14px + env(safe-area-inset-bottom)); }
+    #instructions { bottom: calc(244px + 14px + env(safe-area-inset-bottom)); }
 }
 
 /* ── Responsive: phone landscape ──────────────────────────────── */
@@ -852,7 +866,7 @@ html, body {
         width: 200px;
         height: auto;
     }
-    #palette-grid { grid-template-columns: repeat(2, 1fr); }
+    .palette-grid { grid-template-columns: repeat(2, 1fr); }
     #instructions {
         bottom: calc(8px + env(safe-area-inset-bottom));
         left: calc(8px + env(safe-area-inset-left));

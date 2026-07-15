@@ -11,20 +11,32 @@ import {
     ASSET_INDEX,
     DEFAULT_THEME_ID,
     THEME_INDEX,
+    THEMES,
     themeOfAssetId,
 } from '../assets/assetManifest.js';
 
 const KEY = CONFIG.storageKey;
 
 /**
- * Saves made before asset ids gained their theme prefix (e.g. "house")
- * still need to resolve against the current manifest (e.g. "gmk_house").
+ * Reconcile saved asset ids with the current manifest. Two eras to cover:
+ *   1. Pre-prefix saves (e.g. "house") → add the default prefix ("gmk_house").
+ *   2. Terrain/Nature were once themed ("gmk_grass", "nord_cypress") but are
+ *      now a shared, bare-id neutral set ("grass", "cypress") → strip the
+ *      theme prefix when the bare id exists.
  * Upgrades in place; leaves anything already valid or unrecognised alone.
  */
 function migrateLegacyAssetIds(tileMapData) {
     if (!tileMapData) return;
     const upgrade = (id) => {
         if (id == null || ASSET_INDEX[id]) return id;
+        // Themed terrain/nature id → bare neutral id (gmk_grass → grass).
+        for (const t of THEMES) {
+            if (id.startsWith(t.prefix)) {
+                const bare = id.slice(t.prefix.length);
+                if (ASSET_INDEX[bare]) return bare;
+            }
+        }
+        // Legacy pre-prefix id → default theme prefix (house → gmk_house).
         const prefixed = `gmk_${id}`;
         return ASSET_INDEX[prefixed] ? prefixed : id;
     };
