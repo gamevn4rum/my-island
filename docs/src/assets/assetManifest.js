@@ -133,25 +133,36 @@ const MYKONOS_MANIFEST = [
  * why the loader eagerly loads *every* theme's assets at boot (see
  * `ALL_ASSETS`).
  *
- * Nordic is currently a STUB: `deriveTheme` clones the Mykonos entries under
- * the `nord_` prefix but keeps them pointed at the same PNGs, so the theme
- * switcher is fully functional before any bespoke Nordic art exists. To ship
- * real Nordic art: add `assets/nord_*.png` files and change `deriveTheme` to
- * rewrite each `filename` to the new id instead of reusing the source's.
+ * Nordic is PARTIALLY themed: `deriveTheme` clones the Mykonos entries under
+ * the `nord_` prefix. Entries whose bare id is listed in `NORDIC_REAL_ART`
+ * point at their own bespoke `assets/nord_*.png`; every other entry is still a
+ * stub reusing the Mykonos source PNG, so the theme switcher stays fully
+ * functional while the art set is filled in. To ship more real Nordic art:
+ * drop the trimmed `assets/nord_<id>.png` in and add its bare id to the set.
  */
 const MYKONOS_PREFIX = 'gmk_';
 const NORDIC_PREFIX  = 'nord_';
 
-function deriveTheme(baseManifest, prefix) {
-    return baseManifest.map(entry => ({
-        ...entry,
-        id: prefix + entry.id.slice(MYKONOS_PREFIX.length),
-        // Stub: reuse the Mykonos source PNG until real art is drawn.
-        filename: entry.filename,
-    }));
+// Bare ids (no theme prefix) that have hand-drawn Nordic PNGs on disk.
+const NORDIC_REAL_ART = new Set([
+    'altar', 'cube_house', 'house', 'terrace_house', 'tower_chapel',
+]);
+
+function deriveTheme(baseManifest, prefix, realArt = new Set()) {
+    return baseManifest.map(entry => {
+        const bare = entry.id.slice(MYKONOS_PREFIX.length);
+        const id = prefix + bare;
+        return {
+            ...entry,
+            id,
+            // Real bespoke art points at its own PNG; otherwise reuse the
+            // Mykonos source PNG until that asset is drawn for the theme.
+            filename: realArt.has(bare) ? `${id}.png` : entry.filename,
+        };
+    });
 }
 
-const NORDIC_MANIFEST = deriveTheme(MYKONOS_MANIFEST, NORDIC_PREFIX);
+const NORDIC_MANIFEST = deriveTheme(MYKONOS_MANIFEST, NORDIC_PREFIX, NORDIC_REAL_ART);
 
 export const THEMES = Object.freeze([
     { id: 'mykonos', name: 'Mykonos', prefix: MYKONOS_PREFIX, manifest: MYKONOS_MANIFEST },
