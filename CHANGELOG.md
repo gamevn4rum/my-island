@@ -12,6 +12,10 @@ adopts a formal release process.
 
 ## [Unreleased]
 
+### Added
+- **Background music.** A looping ambient theme now plays once the island
+  loads, with a music toggle in the top-left title card to pause or resume it.
+
 ### Designed
 - **First bespoke Nordic art.** The Nordic theme now ships with its own
   hand-made buildings — **House, Cube House, Terrace House, Altar,** and

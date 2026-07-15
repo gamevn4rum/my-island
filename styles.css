@@ -194,6 +194,37 @@ html, body {
     color: var(--muted);
 }
 
+/* Background-music toggle, living inside the title card. Rhymes with the
+   logo (44×44 rounded square) and borrows the toolbar button's hover/press
+   feedback so it reads as part of the same control family. */
+.music-btn {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    margin-left: 4px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--cream-2);
+    color: var(--cobalt);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.05s ease;
+}
+.music-btn:hover { background: var(--cobalt-light); }
+.music-btn:active { transform: scale(0.94); }
+.music-btn.playing {
+    background: var(--cobalt);
+    color: #fff;
+}
+.music-btn svg { width: 22px; height: 22px; display: block; }
+/* One class (.playing) drives both the colour and which glyph shows. */
+.music-btn .icon-on  { display: none; }
+.music-btn .icon-off { display: block; }
+.music-btn.playing .icon-on  { display: block; }
+.music-btn.playing .icon-off { display: none; }
+
 /* ── Toolbar ───────────────────────────────────────────────────── */
 
 #toolbar {
@@ -729,6 +760,8 @@ html, body {
     .title-logo::after  { width: 3px; height: 12px; top: 18px; }
     .title-text h1 { font-size: 15px; line-height: 1.1; }
     .title-text p  { display: none; }
+    .music-btn { width: 36px; height: 36px; border-radius: 8px; margin-left: 2px; }
+    .music-btn svg { width: 19px; height: 19px; }
 
     /* Toolbar: drop the labels (icons are already self-evident at this
        size) and tighten everything so it doesn't crowd the canvas.
