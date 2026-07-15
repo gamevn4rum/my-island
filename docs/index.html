@@ -29,6 +29,16 @@
                 <h1>The Islander</h1>
                 <p>Design and shape your dream island</p>
             </div>
+            <button id="music-toggle" class="music-btn playing" type="button"
+                    aria-label="Pause background music" aria-pressed="true" title="Background music">
+                <svg class="icon-on" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                </svg>
+                <svg class="icon-off" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                    <line x1="4" y1="3.5" x2="20" y2="19.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                </svg>
+            </button>
         </header>
 
         <aside id="toolbar"></aside>
@@ -93,6 +103,8 @@
         </details>
 
         <div id="toast"></div>
+
+        <audio id="bgm" src="assets/mp3/the-islander.mp3" loop preload="auto"></audio>
     </div>
 
     <script type="module" src="src/main.js"></script>

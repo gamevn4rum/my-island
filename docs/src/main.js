@@ -9,6 +9,7 @@ import { loadAssets } from './assets/assetLoader.js';
 import { Game } from './core/Game.js';
 import { UIManager } from './ui/UIManager.js';
 import { loadUiAudio } from './ui/Audio.js';
+import { initMusic } from './ui/Music.js';
 
 async function main() {
     const fill = document.getElementById('loading-fill');
@@ -46,6 +47,13 @@ async function main() {
 
     loadingScreen.classList.add('hidden');
     app.classList.remove('hidden');
+
+    // Start the background music now that the app is on screen. Autoplay may
+    // be blocked until the first interaction — initMusic handles that.
+    initMusic({
+        audioEl: document.getElementById('bgm'),
+        buttonEl: document.getElementById('music-toggle'),
+    });
 }
 
 /**
