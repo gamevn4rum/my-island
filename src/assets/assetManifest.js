@@ -145,7 +145,8 @@ const NORDIC_PREFIX  = 'nord_';
 
 // Bare ids (no theme prefix) that have hand-drawn Nordic PNGs on disk.
 const NORDIC_REAL_ART = new Set([
-    'altar', 'cube_house', 'house', 'terrace_house', 'tower_chapel',
+    'altar', 'blue_railing', 'cube_house', 'gate_fence', 'house',
+    'terrace_house', 'tower_chapel', 'two_story',
 ]);
 
 function deriveTheme(baseManifest, prefix, realArt = new Set()) {

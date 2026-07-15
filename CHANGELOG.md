@@ -32,10 +32,11 @@ adopts a formal release process.
   including Buildings — is always in view.
 
 ### Designed
-- **First bespoke Nordic art.** The Nordic theme now ships with its own
-  hand-made buildings — **House, Cube House, Terrace House, Altar,** and
-  **Tower Chapel** — instead of borrowing the Mykonos look. The rest of the
-  Nordic set continues to reuse Mykonos art until it's drawn.
+- **More bespoke Nordic art.** The Nordic theme now ships with its own
+  hand-made pieces — **House, Cube House, Terrace House, Two-Story, Altar,
+  Tower Chapel, Blue Railing,** and **Gate Fence** — instead of borrowing the
+  Mykonos look. The rest of the Nordic set continues to reuse Mykonos art
+  until it's drawn.
 
 ---
 
