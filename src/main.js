@@ -5,11 +5,12 @@
  * instantiates the game once everything is ready.
  */
 
-import { loadAssets } from './assets/assetLoader.js';
+import { loadThemes } from './assets/assetLoader.js';
 import { Game } from './core/Game.js';
 import { UIManager } from './ui/UIManager.js';
 import { loadUiAudio } from './ui/Audio.js';
 import { initMusic } from './ui/Music.js';
+import { SaveSystem } from './storage/SaveSystem.js';
 
 async function main() {
     const fill = document.getElementById('loading-fill');
@@ -17,7 +18,10 @@ async function main() {
     const loadingScreen = document.getElementById('loading-screen');
     const app = document.getElementById('app');
 
-    await loadAssets((p, label) => {
+    // Only load the theme packs this save actually needs up front — the active
+    // theme plus any theme its objects reference (and always the default, for
+    // the palette + starter scene). Other themes stream in lazily on switch.
+    await loadThemes(SaveSystem.peekThemes(), (p, label) => {
         fill.style.width = `${Math.round(p * 100)}%`;
         status.textContent = `crafting ${label}…`;
     });

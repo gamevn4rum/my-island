@@ -7,7 +7,12 @@
 
 import { CONFIG } from '../config.js';
 import { PlacedObject } from '../building/PlacedObject.js';
-import { ASSET_INDEX } from '../assets/assetManifest.js';
+import {
+    ASSET_INDEX,
+    DEFAULT_THEME_ID,
+    THEME_INDEX,
+    themeOfAssetId,
+} from '../assets/assetManifest.js';
 
 const KEY = CONFIG.storageKey;
 
@@ -78,5 +83,35 @@ export const SaveSystem = {
 
     clear() {
         try { localStorage.removeItem(KEY); } catch {}
+    },
+
+    /**
+     * Peek at the stored save (without deserializing it) to work out which
+     * themes it actually needs: the active theme it was saved with, plus any
+     * theme referenced by a placed object or terrain tile (villages may mix
+     * themes). The default theme is always included so the palette and the
+     * first-run starter scene have art. Lets boot load only the needed packs
+     * and defer the rest until a theme switch.
+     */
+    peekThemes() {
+        const themes = new Set([DEFAULT_THEME_ID]);
+        try {
+            const raw = localStorage.getItem(KEY);
+            if (raw) {
+                const data = JSON.parse(raw);
+                if (data.theme && THEME_INDEX[data.theme]) themes.add(data.theme);
+                const tm = data.tileMap || {};
+                const ids = [];
+                if (Array.isArray(tm.terrain)) ids.push(...tm.terrain);
+                if (Array.isArray(tm.objects)) ids.push(...tm.objects.map(o => o?.assetId));
+                for (const id of ids) {
+                    const t = themeOfAssetId(id);
+                    if (t) themes.add(t);
+                }
+            }
+        } catch (e) {
+            console.error('peekThemes failed:', e);
+        }
+        return [...themes];
     },
 };

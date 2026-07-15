@@ -16,6 +16,14 @@ adopts a formal release process.
 - **Background music.** A looping ambient theme now plays once the island
   loads, with a music toggle in the top-left title card to pause or resume it.
 
+### Changed
+- **Faster startup.** The opening load now only prepares the theme your island
+  actually uses instead of every theme up front; other themes load the moment
+  you switch to one. Shared artwork is also reused rather than re-processed, so
+  the loading screen clears noticeably sooner.
+- **New app icon.** The beach-house artwork now appears as the browser tab
+  favicon, on the loading screen, and in the top-left title card.
+
 ### Fixed
 - **All five palette categories are now reachable.** The category tabs
   (Terrain, Nature, Props, Water, Buildings) previously overflowed the narrow

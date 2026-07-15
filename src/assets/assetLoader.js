@@ -14,11 +14,201 @@
  * path is never taken at runtime.
  */
 
-import { ALL_ASSETS } from './assetManifest.js';
+import {
+    THEME_INDEX,
+    getThemeManifest,
+} from './assetManifest.js';
 import { imageToAsset, loadImageElement } from './imageToAsset.js';
 import { renderVoxels } from './voxelRenderer.js';
 
+// Built assets, keyed by absolute id. Populated incrementally as themes are
+// loaded (boot loads only the themes a save actually needs; the rest arrive
+// lazily on first theme switch), so this map may be partial.
 let _assets = null;
+
+// Themes whose art has been fully brought in.
+const _loadedThemes = new Set();
+
+// In-flight lazy loads, keyed by a sorted theme-set signature, so two rapid
+// requests for the same theme share one load instead of double-processing.
+const _inflight = new Map();
+
+// Dedup cache keyed by everything that affects a built record: the same source
+// PNG processed with the same geometry yields identical canvases, so themes
+// that share art (e.g. the Nordic stub reusing Mykonos PNGs) reuse the work
+// instead of re-fetching and re-rendering it. Maps signature → built asset.
+const _fileCache = new Map();
+
+/** A signature over every field that affects the processed canvases/shadow. */
+function _entrySignature(entry) {
+    return [
+        entry.filename,
+        entry.kind,
+        entry.footprint?.w, entry.footprint?.d,
+        entry.sizeScale ?? 1,
+        entry.tileLike === true,
+        entry.fitCell === true,
+        entry.flatBase === true,
+        entry.noShadow === true,
+        entry.shadowStyle ?? 'cast',
+    ].join('|');
+}
+
+/** Build one manifest entry into a draw-ready asset, or null if it can't. */
+async function _processEntry(entry) {
+    const meta = {
+        id: entry.id,
+        name: entry.name,
+        category: entry.category,
+        kind: entry.kind,
+        footprint: entry.footprint,
+        tileLike: entry.tileLike === true,
+        noShadow: entry.noShadow === true,
+        flatBase: entry.flatBase === true,
+        shadowStyle: entry.shadowStyle ?? 'cast',
+    };
+
+    let record = null;
+
+    if (entry.filename) {
+        try {
+            const img = await loadImageElement(`assets/${entry.filename}`);
+            record = imageToAsset(img, entry.footprint, entry.kind, {
+                sizeScale: entry.sizeScale ?? 1,
+                tileLike:  entry.tileLike === true,
+                fitCell:   entry.fitCell === true,
+                flatBase:  entry.flatBase === true,
+            });
+            record.source = 'image';
+        } catch {
+            /* fall through to procedural fallback */
+        }
+    }
+
+    if (!record && entry.builder) {
+        const voxels = entry.builder();
+        record = renderVoxels(voxels, entry.footprint);
+        record.source = 'procedural';
+    }
+
+    if (!record) return null;
+
+    // Pre-render a draw-ready canvas at display resolution so the per-frame
+    // `drawImage` no longer downsamples a multi-megabyte PNG every frame.
+    record.displayCanvas = buildDisplayCanvas(record.canvas, record.width, record.height);
+
+    const built = { ...meta, ...record };
+
+    // Pre-render a silhouette shadow for objects that should cast a ground
+    // shadow. Tile-like assets (terrain) and assets that bake their own shadow
+    // into the PNG opt out via the manifest.
+    if (entry.kind === 'object' && !meta.tileLike && !meta.noShadow && record.canvas) {
+        const shadow = buildShadowCanvas(record.canvas, record.width, record.height);
+        if (shadow) {
+            built.shadowCanvas  = shadow.canvas;
+            built.shadowPadding = shadow.padding;
+            built.shadowWidth   = shadow.width;
+            built.shadowHeight  = shadow.height;
+            built.shadowBlurred = shadow.blurred;
+        }
+        if (meta.shadowStyle === 'contact') {
+            built.contactPoints = buildContactPoints(record.canvas, record.width, record.height);
+        }
+    }
+
+    return built;
+}
+
+export function isThemeLoaded(themeId) {
+    return _loadedThemes.has(themeId);
+}
+
+/**
+ * Load the art for the given themes into the shared asset map. Entries already
+ * present (or sharing a source PNG with an already-built entry) are reused, so
+ * calling this repeatedly only ever does the outstanding work.
+ */
+export async function loadThemes(themeIds, onProgress = () => {}) {
+    if (!_assets) _assets = {};
+
+    // Collect the not-yet-built entries across the requested themes.
+    const entries = [];
+    for (const themeId of themeIds) {
+        if (!THEME_INDEX[themeId] || _loadedThemes.has(themeId)) continue;
+        for (const entry of getThemeManifest(themeId)) {
+            if (!_assets[entry.id]) entries.push(entry);
+        }
+    }
+
+    const total = entries.length;
+    let imageCount = 0;
+    let fallbackCount = 0;
+    let reuseCount = 0;
+    let lastYield = performance.now();
+
+    for (let i = 0; i < total; i++) {
+        const entry = entries[i];
+        const sig = entry.filename ? _entrySignature(entry) : null;
+
+        let built;
+        if (sig && _fileCache.has(sig)) {
+            // Same PNG + geometry already built for another theme — reuse the
+            // canvases wholesale, only swapping in this entry's identity.
+            const cached = _fileCache.get(sig);
+            built = { ...cached, id: entry.id, name: entry.name, category: entry.category };
+            reuseCount++;
+        } else {
+            built = await _processEntry(entry);
+            if (built) {
+                if (sig) _fileCache.set(sig, built);
+                if (built.source === 'image') imageCount++;
+                else if (built.source === 'procedural') fallbackCount++;
+            }
+        }
+
+        if (built) _assets[entry.id] = built;
+
+        onProgress((i + 1) / total, entry.name);
+
+        // Time-budget yield: let the loading bar paint without burning a whole
+        // frame after every asset. Cache reuses cost almost nothing, so this
+        // yields far less than the old every-2-assets rule.
+        const now = performance.now();
+        if (now - lastYield > 24) {
+            await new Promise(r => requestAnimationFrame(r));
+            lastYield = performance.now();
+        }
+    }
+
+    for (const themeId of themeIds) {
+        if (THEME_INDEX[themeId]) _loadedThemes.add(themeId);
+    }
+
+    if (total > 0) {
+        const parts = [`${imageCount} images`];
+        if (reuseCount)    parts.push(`${reuseCount} reused`);
+        if (fallbackCount) parts.push(`${fallbackCount} procedural`);
+        console.info(`[assets] loaded ${themeIds.join(', ')} — ${parts.join(', ')}.`);
+    }
+
+    return _assets;
+}
+
+/**
+ * Ensure the given themes are loaded, coalescing concurrent requests for the
+ * same work. Resolves once their art is available.
+ */
+export function ensureThemesLoaded(themeIds, onProgress = () => {}) {
+    const need = themeIds.filter(t => THEME_INDEX[t] && !_loadedThemes.has(t));
+    if (need.length === 0) return Promise.resolve(_assets);
+
+    const key = need.slice().sort().join(',');
+    if (_inflight.has(key)) return _inflight.get(key);
+
+    const p = loadThemes(need, onProgress).finally(() => _inflight.delete(key));
+    _inflight.set(key, p);
+    return p;
+}
 
 /**
  * Quality knobs for asset pre-rendering.
@@ -188,104 +378,13 @@ function buildContactPoints(srcCanvas, displayW, displayH) {
     });
 }
 
+/**
+ * Back-compat entry point: load every theme's art in one pass. Kept for any
+ * caller that wants the whole pack; the boot path now prefers `loadThemes`
+ * with just the themes a save needs.
+ */
 export async function loadAssets(onProgress = () => {}) {
-    if (_assets) return _assets;
-    const out = {};
-    const total = ALL_ASSETS.length;
-    let imageCount = 0;
-    let fallbackCount = 0;
-
-    for (let i = 0; i < total; i++) {
-        const entry = ALL_ASSETS[i];
-        const meta = {
-            id: entry.id,
-            name: entry.name,
-            category: entry.category,
-            kind: entry.kind,
-            footprint: entry.footprint,
-            tileLike: entry.tileLike === true,
-            noShadow: entry.noShadow === true,
-            flatBase: entry.flatBase === true,
-            shadowStyle: entry.shadowStyle ?? 'cast',
-        };
-
-        let record = null;
-
-        if (entry.filename) {
-            try {
-                const img = await loadImageElement(`assets/${entry.filename}`);
-                record = imageToAsset(img, entry.footprint, entry.kind, {
-                    sizeScale: entry.sizeScale ?? 1,
-                    tileLike:  entry.tileLike === true,
-                    fitCell:   entry.fitCell === true,
-                    flatBase:  entry.flatBase === true,
-                });
-                record.source = 'image';
-                imageCount++;
-            } catch {
-                /* fall through to procedural fallback */
-            }
-        }
-
-        if (!record && entry.builder) {
-            const voxels = entry.builder();
-            record = renderVoxels(voxels, entry.footprint);
-            record.source = 'procedural';
-            fallbackCount++;
-        }
-
-        if (record) {
-            // Pre-render a draw-ready canvas at display resolution so the
-            // per-frame `drawImage` no longer downsamples a multi-megabyte
-            // PNG every frame.
-            record.displayCanvas = buildDisplayCanvas(
-                record.canvas, record.width, record.height,
-            );
-
-            out[entry.id] = { ...meta, ...record };
-
-            // Pre-render a silhouette shadow for objects that should cast a
-            // ground shadow. Tile-like assets (terrain) and assets that bake
-            // their own shadow into the PNG opt out via the manifest.
-            if (
-                entry.kind === 'object'
-                && !meta.tileLike
-                && !meta.noShadow
-                && record.canvas
-            ) {
-                const shadow = buildShadowCanvas(record.canvas, record.width, record.height);
-                if (shadow) {
-                    out[entry.id].shadowCanvas  = shadow.canvas;
-                    out[entry.id].shadowPadding = shadow.padding;
-                    out[entry.id].shadowWidth   = shadow.width;
-                    out[entry.id].shadowHeight  = shadow.height;
-                    out[entry.id].shadowBlurred = shadow.blurred;
-                }
-                if (meta.shadowStyle === 'contact') {
-                    out[entry.id].contactPoints = buildContactPoints(
-                        record.canvas,
-                        record.width,
-                        record.height,
-                    );
-                }
-            }
-        }
-
-        onProgress((i + 1) / total, entry.name);
-        // Yield a frame periodically so the loading UI can paint. More
-        // frequent than before (every asset) to keep the bar smooth even
-        // though each step now does extra pre-render work.
-        if (i % 2 === 0) await new Promise(r => requestAnimationFrame(r));
-    }
-
-    if (fallbackCount > 0) {
-        console.info(`[assets] loaded ${imageCount} images, ${fallbackCount} procedural fallbacks.`);
-    } else {
-        console.info(`[assets] loaded ${imageCount} images (full pack).`);
-    }
-
-    _assets = out;
-    return _assets;
+    return loadThemes(Object.keys(THEME_INDEX), onProgress);
 }
 
 export function getAsset(id) {

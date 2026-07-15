@@ -198,8 +198,24 @@ export function reThemeAssetId(assetId, targetThemeId) {
     return assetId;
 }
 
-// Flattened across all themes — this is what the loader ingests so every
-// theme's art is ready before the first frame.
+/**
+ * Which theme an absolute asset id belongs to (gmk_house → 'mykonos',
+ * nord_house → 'nordic'). Returns null for bare/legacy ids that carry no
+ * theme prefix. Used to decide which theme packs a save actually needs so
+ * the loader can skip unused ones at boot.
+ */
+export function themeOfAssetId(assetId) {
+    if (assetId == null) return null;
+    for (const t of THEMES) {
+        if (assetId.startsWith(t.prefix)) return t.id;
+    }
+    return null;
+}
+
+// Flattened across all themes. Still the union of every theme's entries —
+// `ASSET_INDEX` must span all themes so any placed/saved id resolves to its
+// manifest entry even before that theme's *art* is loaded (the loader now
+// brings in art lazily; the metadata index stays complete).
 export const ALL_ASSETS = THEMES.flatMap(t => t.manifest);
 
 export const ASSET_INDEX = Object.freeze(
