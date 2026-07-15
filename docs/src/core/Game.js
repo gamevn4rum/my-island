@@ -22,6 +22,7 @@ import {
 import { SaveSystem } from '../storage/SaveSystem.js';
 import { cellToScreen } from '../grid/IsoGrid.js';
 import { playPlacementFor } from '../ui/Audio.js';
+import { ensureThemesLoaded, isThemeLoaded } from '../assets/assetLoader.js';
 
 export class Game {
     constructor(canvas, ui = null) {
@@ -108,6 +109,19 @@ export class Game {
      * same category/tool stays live across the switch.
      */
     setTheme(themeId) {
+        if (this.theme === themeId || !THEME_INDEX[themeId]) return;
+        // A theme's art may not be loaded yet (boot only brings in the themes
+        // the save needs). Stream it in, then apply — the palette can't show a
+        // theme whose thumbnails aren't ready.
+        if (!isThemeLoaded(themeId)) {
+            this.ui?.showToast?.(`Loading ${THEME_INDEX[themeId].name}…`);
+            ensureThemesLoaded([themeId]).then(() => this._applyTheme(themeId));
+            return;
+        }
+        this._applyTheme(themeId);
+    }
+
+    _applyTheme(themeId) {
         if (this.theme === themeId || !THEME_INDEX[themeId]) return;
         this.theme = themeId;
         const remapped = reThemeAssetId(this.selectedAssetId, themeId);

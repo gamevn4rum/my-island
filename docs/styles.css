@@ -102,19 +102,7 @@ html, body {
     width: 72px;
     height: 72px;
     margin: 0 auto 12px;
-    background:
-        radial-gradient(circle at 50% 40%, var(--cobalt) 0 18%, transparent 19%),
-        linear-gradient(180deg, #fff 60%, #efe7d3 100%);
-    border-radius: 16px;
-    box-shadow: inset 0 -6px 0 rgba(0,0,0,0.04);
-    position: relative;
-}
-.loading-logo::after {
-    content: '';
-    position: absolute;
-    bottom: 8px; left: 50%; transform: translateX(-50%);
-    width: 30px; height: 4px; background: var(--cobalt);
-    border-radius: 2px;
+    background: url('assets/general/beach-house.png') center / contain no-repeat;
 }
 .loading-title { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
 .loading-sub   { color: var(--muted); margin-top: 4px; font-size: 13px; }
@@ -160,26 +148,7 @@ html, body {
     width: 44px;
     height: 44px;
     border-radius: 10px;
-    background:
-        linear-gradient(180deg, #fff, #f0e6cf);
-    position: relative;
-    box-shadow: inset 0 -4px 0 rgba(0,0,0,0.04);
-}
-.title-logo::before {
-    content: '';
-    position: absolute;
-    width: 26px; height: 14px;
-    border-radius: 13px 13px 0 0;
-    background: var(--cobalt);
-    left: 50%; top: 8px; transform: translateX(-50%);
-}
-.title-logo::after {
-    content: '';
-    position: absolute;
-    width: 4px; height: 14px;
-    background: var(--cobalt);
-    border-radius: 2px;
-    left: 50%; top: 22px; transform: translateX(-50%);
+    background: url('assets/general/beach-house.png') center / contain no-repeat;
 }
 .title-text h1 {
     margin: 0;
@@ -758,8 +727,6 @@ html, body {
         height: 36px;
         border-radius: 8px;
     }
-    .title-logo::before { width: 22px; height: 12px; top: 6px; }
-    .title-logo::after  { width: 3px; height: 12px; top: 18px; }
     .title-text h1 { font-size: 15px; line-height: 1.1; }
     .title-text p  { display: none; }
     .music-btn { width: 36px; height: 36px; border-radius: 8px; margin-left: 2px; }
