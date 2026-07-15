@@ -10,6 +10,16 @@ adopts a formal release process.
 
 ---
 
+## [Unreleased]
+
+### Designed
+- **First bespoke Nordic art.** The Nordic theme now ships with its own
+  hand-made buildings — **House, Cube House, Terrace House, Altar,** and
+  **Tower Chapel** — instead of borrowing the Mykonos look. The rest of the
+  Nordic set continues to reuse Mykonos art until it's drawn.
+
+---
+
 ## [0.2.0] — 2026-07-14 · Themes & Island Customization
 
 The builder becomes personalizable: players can now restyle the whole asset
