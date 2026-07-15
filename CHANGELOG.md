@@ -16,6 +16,13 @@ adopts a formal release process.
 - **Background music.** A looping ambient theme now plays once the island
   loads, with a music toggle in the top-left title card to pause or resume it.
 
+### Fixed
+- **All five palette categories are now reachable.** The category tabs
+  (Terrain, Nature, Props, Water, Buildings) previously overflowed the narrow
+  palette behind a hidden scrollbar, leaving **Water** and **Buildings**
+  effectively invisible. The tabs now wrap onto two rows so every category —
+  including Buildings — is always in view.
+
 ### Designed
 - **First bespoke Nordic art.** The Nordic theme now ships with its own
   hand-made buildings — **House, Cube House, Terrace House, Altar,** and
