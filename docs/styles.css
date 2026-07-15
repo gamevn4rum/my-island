@@ -334,24 +334,26 @@ html, body {
 
 #palette-tabs {
     display: flex;
+    /* Five categories don't fit the narrow palette on one row. Wrapping to
+       two rows keeps every tab visible; the previous overflow-x:auto hid the
+       last tabs (Water, Buildings) behind a scrollbar we'd deliberately
+       hidden, so they were effectively unreachable. */
+    flex-wrap: wrap;
     gap: 2px;
     padding: 0 2px 4px;
     border-bottom: 1px solid var(--line);
     margin-bottom: 6px;
-    overflow-x: auto;
-    scrollbar-width: none;
     flex-shrink: 0;
 }
-#palette-tabs::-webkit-scrollbar { display: none; }
 .tab {
     border: 0;
     background: transparent;
-    padding: 4px 6px;
+    padding: 4px 5px;
     border-radius: 6px 6px 0 0;
     font: inherit;
-    font-size: 9.5px;
+    font-size: 9px;
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.02em;
     color: var(--muted);
     cursor: pointer;
     text-transform: uppercase;
