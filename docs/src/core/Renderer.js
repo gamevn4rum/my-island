@@ -297,6 +297,48 @@ export class Renderer {
         ctx.drawImage(this._chromeCanvas.top, 0, 0, w, h);
     }
 
+    /**
+     * Render one clean frame — no grid, no hover highlight, no ghost preview —
+     * and return it as a JPEG data URL. The DOM chrome (HUD, palette, toolbar)
+     * lives outside the canvas, so it's naturally excluded. The screen-space
+     * chrome backdrop fills the whole canvas, so the flattened JPEG keeps the
+     * sky rather than going black where the canvas was transparent.
+     *
+     * State is saved and restored around the draw so the live view is
+     * untouched; a final markDirty()+draw() repaints the normal frame.
+     */
+    captureJPEG(quality = 0.92) {
+        const savedGrid = this.showGrid;
+        const savedHover = this.hoverCell;
+        this.showGrid = false;
+        this.hoverCell = null;
+
+        this._dirty = true;
+        this.draw();
+
+        // The game canvas has an alpha channel and its sky backdrop is
+        // semi-transparent — on screen the page's cream gradient shows through.
+        // JPEG has no alpha, so flatten onto an opaque copy of that same body
+        // gradient; otherwise transparent areas would export as black.
+        const flat = document.createElement('canvas');
+        flat.width  = this.canvas.width;
+        flat.height = this.canvas.height;
+        const fctx = flat.getContext('2d');
+        const bg = fctx.createLinearGradient(0, 0, 0, flat.height);
+        bg.addColorStop(0, '#f6efe1');
+        bg.addColorStop(1, '#ebe1cc');
+        fctx.fillStyle = bg;
+        fctx.fillRect(0, 0, flat.width, flat.height);
+        fctx.drawImage(this.canvas, 0, 0);
+        const url = flat.toDataURL('image/jpeg', quality);
+
+        this.showGrid = savedGrid;
+        this.hoverCell = savedHover;
+        this.markDirty();
+        this.draw();
+        return url;
+    }
+
     _applyCamera() {
         const ctx = this.ctx;
         ctx.translate(this.camera.offsetX, this.camera.offsetY);

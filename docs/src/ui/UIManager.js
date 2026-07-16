@@ -32,6 +32,17 @@ export class UIManager {
             ins.addEventListener('toggle', () => playUiClick());
         }
 
+        // Screenshot button (next to the music player in the title card):
+        // capture the island canvas — no grid, no HUD, no menu — as a JPEG
+        // and trigger a download.
+        const shot = document.getElementById('screenshot-btn');
+        if (shot) {
+            shot.addEventListener('click', () => {
+                playUiClick();
+                this.captureScreenshot();
+            });
+        }
+
         // Expose for sibling modules
         game.toolbar = this.toolbar;
         game.palette = this.palette;
@@ -41,6 +52,24 @@ export class UIManager {
     update() {
         this.toolbar.update();
         this.palette.update();
+    }
+
+    /**
+     * Capture the current island as a JPEG and download it. The DOM chrome
+     * (title card, toolbar, palette, HUD, controls) is never part of the
+     * canvas, so it's excluded automatically; the renderer additionally drops
+     * the grid and cursor preview for the capture.
+     */
+    captureScreenshot() {
+        const url = this.game.renderer.captureJPEG();
+        const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `the-islander-${stamp}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        this.showToast('Screenshot saved');
     }
 
     showToast(text, ms = 1600) {

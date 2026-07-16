@@ -158,6 +158,7 @@ const NORDIC_PREFIX  = 'nord_';
 const NORDIC_REAL_ART = new Set([
     'altar', 'blue_railing', 'cube_house', 'gate_fence', 'house',
     'terrace_house', 'tower_chapel', 'two_story',
+    'hanging_lantern', 'main_chapel', 'pergola_house', 'villa', 'well',
 ]);
 
 function deriveTheme(baseManifest, prefix, realArt = new Set()) {
