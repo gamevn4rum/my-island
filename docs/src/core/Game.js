@@ -114,8 +114,19 @@ export class Game {
         // the save needs). Stream it in, then apply — the palette can't show a
         // theme whose thumbnails aren't ready.
         if (!isThemeLoaded(themeId)) {
-            this.ui?.showToast?.(`Loading ${THEME_INDEX[themeId].name}…`);
-            ensureThemesLoaded([themeId]).then(() => this._applyTheme(themeId));
+            // The theme's art has to stream in first. Show a progress popup
+            // (same language as the boot loader) instead of blocking blindly.
+            this.ui?.showThemeLoading?.(THEME_INDEX[themeId].name);
+            ensureThemesLoaded([themeId], (p, label) => {
+                this.ui?.updateThemeLoading?.(p, label);
+            }).then(async () => {
+                await this.ui?.hideThemeLoading?.();
+                this._applyTheme(themeId);
+            }).catch(err => {
+                console.error(err);
+                this.ui?.hideThemeLoading?.();
+                this.ui?.showToast?.('Theme failed to load');
+            });
             return;
         }
         this._applyTheme(themeId);
