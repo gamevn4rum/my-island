@@ -13,10 +13,20 @@ adopts a formal release process.
 ## [Unreleased]
 
 ### Added
+- **Screenshot button.** A camera button in the top-left title card (next to
+  the music player) saves a clean JPEG of your island — no grid, no HUD, no
+  menus — straight to your downloads.
+- **More Nordic artwork.** Five more buildings and props now have bespoke
+  Nordic art: the well, main chapel, pergola house, main villa, and hanging
+  lantern.
 - **Background music.** A looping ambient theme now plays once the island
   loads, with a music toggle in the top-left title card to pause or resume it.
 
 ### Changed
+- **Controls moved to a bottom menu.** The clock, display toggles, and island
+  size/shape controls now sit in a compact horizontal bar centered along the
+  bottom of the screen instead of the bottom-right corner, freeing the full
+  right column for the asset palette.
 - **Terrain & Nature are now theme-neutral.** Ground tiles and plants are a
   single shared set that no longer changes with the theme. The palette is split
   into two sections: a themed section on top (theme switcher + Buildings, Water,
