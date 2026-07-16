@@ -118,6 +118,45 @@
 
         <div id="toast"></div>
 
+        <div id="shot-modal" class="hidden" role="dialog" aria-modal="true" aria-label="Island screenshot">
+            <div class="shot-backdrop" data-shot-close></div>
+            <div class="shot-card">
+                <div class="shot-head">
+                    <span class="shot-title">Your island</span>
+                    <button id="shot-close" class="shot-x" type="button" aria-label="Close" data-shot-close>
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                                  d="M6 6l12 12M18 6L6 18"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="shot-preview"><img id="shot-image" alt="Screenshot of your island" /></div>
+                <div class="shot-actions">
+                    <button id="shot-copy" class="shot-btn" type="button">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="currentColor" d="M16 1H4a2 2 0 0 0-2 2v12h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/>
+                        </svg>
+                        <span>Copy</span>
+                    </button>
+                    <button id="shot-download" class="shot-btn shot-btn--primary" type="button">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="currentColor" d="M12 3a1 1 0 0 1 1 1v9.59l3.3-3.3a1 1 0 0 1 1.4 1.42l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 0 1 1.4-1.42l3.3 3.3V4a1 1 0 0 1 1-1zM5 19a1 1 0 0 1 1-1h12a1 1 0 1 1 0 2H6a1 1 0 0 1-1-1z"/>
+                        </svg>
+                        <span>Download</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="theme-loading" class="hidden" role="status" aria-live="polite">
+            <div class="theme-loading-card">
+                <div class="theme-loading-logo"></div>
+                <div class="theme-loading-title">Loading <span id="theme-loading-name">theme</span>…</div>
+                <div class="theme-loading-bar"><div class="theme-loading-fill" id="theme-loading-fill"></div></div>
+                <div class="theme-loading-status" id="theme-loading-status">preparing assets</div>
+            </div>
+        </div>
+
         <audio id="bgm" src="assets/mp3/the-islander.mp3" loop preload="auto"></audio>
     </div>
 

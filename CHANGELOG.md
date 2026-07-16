@@ -13,9 +13,13 @@ adopts a formal release process.
 ## [Unreleased]
 
 ### Added
+- **Theme-switch loading popup.** Switching to a theme whose art hasn't loaded
+  yet now shows a compact progress popup — same look as the home-screen loader —
+  with a bar that fills as the assets stream in, instead of a quiet toast.
 - **Screenshot button.** A camera button in the top-left title card (next to
-  the music player) saves a clean JPEG of your island — no grid, no HUD, no
-  menus — straight to your downloads.
+  the music player) captures a clean image of your island — no grid, no HUD, no
+  menus — and opens a preview popup where you can copy it to the clipboard or
+  download it.
 - **More Nordic artwork.** Five more buildings and props now have bespoke
   Nordic art: the well, main chapel, pergola house, main villa, and hanging
   lantern.
