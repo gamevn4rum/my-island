@@ -5,12 +5,22 @@
  * instantiates the game once everything is ready.
  */
 
-import { loadThemes } from './assets/assetLoader.js';
+import { loadThemesForBoot } from './assets/assetLoader.js';
 import { Game } from './core/Game.js';
 import { UIManager } from './ui/UIManager.js';
 import { loadUiAudio } from './ui/Audio.js';
 import { initMusic } from './ui/Music.js';
 import { SaveSystem } from './storage/SaveSystem.js';
+
+// Asset ids the first-run starter scene places. Boot builds these first so the
+// opening village can paint immediately; the rest of the pack (palette-only
+// art) streams in afterward. Keep in sync with seedExampleVillage() below.
+const STARTER_ASSET_IDS = [
+    'grass', 'path', 'water', 'sand',
+    'gmk_house', 'gmk_main_chapel', 'gmk_windmill', 'gmk_two_story', 'gmk_villa',
+    'cypress', 'bougainvillea', 'olive', 'flower_pot', 'gmk_terracotta_pot',
+    'agave', 'gmk_lantern_post', 'gmk_small_bridge',
+];
 
 async function main() {
     const fill = document.getElementById('loading-fill');
@@ -21,9 +31,25 @@ async function main() {
     // Only load the theme packs this save actually needs up front — the active
     // theme plus any theme its objects reference (and always the default, for
     // the palette + starter scene). Other themes stream in lazily on switch.
-    await loadThemes(SaveSystem.peekThemes(), (p, label) => {
-        fill.style.width = `${Math.round(p * 100)}%`;
-        status.textContent = `crafting ${label}…`;
+    const themeIds = SaveSystem.peekThemes();
+
+    // Within those themes, build the CRITICAL assets first (what the opening
+    // frame renders): a restored save's placed ids, or the starter-scene ids on
+    // first run. The app appears as soon as these are ready; the remaining
+    // (palette-only) assets finish in the background.
+    const savedIds = SaveSystem.peekAssetIds();
+    const criticalIds = savedIds.size ? savedIds : new Set(STARTER_ASSET_IDS);
+
+    // Deferred hook: fires per asset during the background pass. Wired to the
+    // palette refresh only after the UI exists (see below).
+    let onBackgroundAsset = null;
+
+    const { restDone } = await loadThemesForBoot(themeIds, criticalIds, {
+        onProgress: (p, label) => {
+            fill.style.width = `${Math.round(p * 100)}%`;
+            status.textContent = `crafting ${label}…`;
+        },
+        onBackgroundAsset: (id) => onBackgroundAsset?.(id),
     });
 
     // Kick off the UI sound effect download in parallel — it's tiny and
@@ -57,6 +83,25 @@ async function main() {
     initMusic({
         audioEl: document.getElementById('bgm'),
         buttonEl: document.getElementById('music-toggle'),
+    });
+
+    // The rest of the asset pack streams in behind the now-interactive app.
+    // Coalesce palette refreshes so swatches fill in progressively without
+    // rebuilding the grid on every single asset.
+    let refreshQueued = false;
+    const refreshPalette = () => {
+        if (refreshQueued) return;
+        refreshQueued = true;
+        setTimeout(() => {
+            refreshQueued = false;
+            ui.palette.refreshLoadedArt();
+            game.renderer.markDirty();
+        }, 180);
+    };
+    onBackgroundAsset = refreshPalette;
+    restDone.then(() => {
+        ui.palette.refreshLoadedArt();
+        game.renderer.markDirty();
     });
 }
 

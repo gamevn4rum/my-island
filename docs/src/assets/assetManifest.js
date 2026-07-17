@@ -69,7 +69,7 @@ const NEUTRAL_MANIFEST = [
     { ...N('flower_pot',    'Flower Pot',    { w: 1, d: 1 }, 0.35), builder: A.flowerPot },
 ];
 
-const MYKONOS_MANIFEST = [
+const AEGEAN_MANIFEST = [
     // ── PROPS ─────────────────────────────────────────────────────
     // Walls, railings, gates, archways — span the full cell because they
     // are architectural pieces meant to align with adjacent tiles.
@@ -120,7 +120,7 @@ const MYKONOS_MANIFEST = [
     { ...W('gmk_veg_garden',   'Veg Garden', { w: 1, d: 1 }, 0.95), filename: 'newAsset/gmk_veg_garden.png', fitCell: true, flatBase: true, noShadow: true, builder: A.vegetableGarden },
 
     // ── BUILDINGS ─────────────────────────────────────────────────
-    { ...B('gmk_house',         'House',         { w: 2, d: 2 }), builder: A.smallMykonosHouse },
+    { ...B('gmk_house',         'House',         { w: 2, d: 2 }), builder: A.smallAegeanHouse },
     { ...B('gmk_two_story',     'Two-Story',     { w: 3, d: 3 }), builder: A.twoStoryHouse },
     { ...B('gmk_cube_house',    'Cube House',    { w: 2, d: 2 }), builder: A.whiteCubeHouse },
     { ...B('gmk_terrace_house', 'Terrace House', { w: 3, d: 2 }), builder: A.terraceHouse },
@@ -144,14 +144,16 @@ const MYKONOS_MANIFEST = [
  * why the loader eagerly loads *every* theme's assets at boot (see
  * `ALL_ASSETS`).
  *
- * Nordic is PARTIALLY themed: `deriveTheme` clones the Mykonos entries under
+ * Nordic is PARTIALLY themed: `deriveTheme` clones the Aegean entries under
  * the `nord_` prefix. Entries whose bare id is listed in `NORDIC_REAL_ART`
  * point at their own bespoke `assets/nord_*.png`; every other entry is still a
- * stub reusing the Mykonos source PNG, so the theme switcher stays fully
+ * stub reusing the Aegean source PNG, so the theme switcher stays fully
  * functional while the art set is filled in. To ship more real Nordic art:
  * drop the trimmed `assets/nord_<id>.png` in and add its bare id to the set.
  */
-const MYKONOS_PREFIX = 'gmk_';
+// The Aegean theme keeps the historical `gmk_` ("generated Mykonos") id slug
+// so existing saves — whose placed objects reference gmk_* ids — keep resolving.
+const AEGEAN_PREFIX = 'gmk_';
 const NORDIC_PREFIX  = 'nord_';
 
 // Bare ids (no theme prefix) that have hand-drawn Nordic PNGs on disk.
@@ -163,23 +165,25 @@ const NORDIC_REAL_ART = new Set([
 
 function deriveTheme(baseManifest, prefix, realArt = new Set()) {
     return baseManifest.map(entry => {
-        const bare = entry.id.slice(MYKONOS_PREFIX.length);
+        const bare = entry.id.slice(AEGEAN_PREFIX.length);
         const id = prefix + bare;
         return {
             ...entry,
             id,
             // Real bespoke art points at its own PNG; otherwise reuse the
-            // Mykonos source PNG until that asset is drawn for the theme.
+            // Aegean source PNG until that asset is drawn for the theme.
             filename: realArt.has(bare) ? `${id}.png` : entry.filename,
         };
     });
 }
 
-const NORDIC_MANIFEST = deriveTheme(MYKONOS_MANIFEST, NORDIC_PREFIX, NORDIC_REAL_ART);
+const NORDIC_MANIFEST = deriveTheme(AEGEAN_MANIFEST, NORDIC_PREFIX, NORDIC_REAL_ART);
 
 export const THEMES = Object.freeze([
-    { id: 'mykonos', name: 'Mykonos', prefix: MYKONOS_PREFIX, manifest: MYKONOS_MANIFEST },
-    { id: 'nordic',  name: 'Nordic',  prefix: NORDIC_PREFIX,  manifest: NORDIC_MANIFEST },
+    // The Aegean theme's persisted `id` slug stays 'mykonos' (and its assets
+    // keep the `gmk_` prefix) for save back-compat; only the display name changed.
+    { id: 'mykonos', name: 'Aegean', prefix: AEGEAN_PREFIX, manifest: AEGEAN_MANIFEST },
+    { id: 'nordic',  name: 'Nordic', prefix: NORDIC_PREFIX, manifest: NORDIC_MANIFEST },
 ]);
 
 export const DEFAULT_THEME_ID = 'mykonos';
@@ -212,8 +216,8 @@ export function reThemeAssetId(assetId, targetThemeId) {
 }
 
 /**
- * Which theme an absolute asset id belongs to (gmk_house → 'mykonos',
- * nord_house → 'nordic'). Returns null for bare/legacy ids that carry no
+ * Which theme an absolute asset id belongs to (gmk_house → 'mykonos', the
+ * Aegean theme's id slug; nord_house → 'nordic'). Returns null for bare/legacy ids that carry no
  * theme prefix. Used to decide which theme packs a save actually needs so
  * the loader can skip unused ones at boot.
  */

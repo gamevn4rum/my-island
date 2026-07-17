@@ -596,7 +596,7 @@ function addDoor(voxels, x, y, z, color = P.cobalt) {
     voxels.push({ x, y, z: z + 1, c: color });
 }
 
-export function smallMykonosHouse() {
+export function smallAegeanHouse() {
     // 2×2 footprint = 8×8 voxels. Whitewashed cube with blue door, flat roof.
     const W = VPT * 2, D = VPT * 2;
     const out = [];

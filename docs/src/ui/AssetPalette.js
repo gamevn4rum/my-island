@@ -110,18 +110,7 @@ export class AssetPalette {
             swatch.dataset.assetId = def.id;
 
             const gen = generated[def.id];
-            if (gen) {
-                const img = document.createElement('canvas');
-                const max = 56;
-                const scale = Math.min(max / gen.width, max / gen.height, 2);
-                img.width  = Math.ceil(gen.width  * scale);
-                img.height = Math.ceil(gen.height * scale);
-                const ctx = img.getContext('2d');
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-                ctx.drawImage(gen.canvas, 0, 0, img.width, img.height);
-                swatch.appendChild(img);
-            }
+            if (gen) swatch.appendChild(this._makeThumb(gen));
 
             const name = document.createElement('span');
             name.className = 'name';
@@ -133,6 +122,37 @@ export class AssetPalette {
                 this.game.selectAsset(def.id);
             });
             section.gridEl.appendChild(swatch);
+        }
+    }
+
+    /** Build a 56px thumbnail canvas for a loaded asset record. */
+    _makeThumb(gen) {
+        const img = document.createElement('canvas');
+        const max = 56;
+        const scale = Math.min(max / gen.width, max / gen.height, 2);
+        img.width  = Math.ceil(gen.width  * scale);
+        img.height = Math.ceil(gen.height * scale);
+        const ctx = img.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(gen.canvas, 0, 0, img.width, img.height);
+        return img;
+    }
+
+    /**
+     * Fill in thumbnails for swatches whose art has finished loading since the
+     * grid was built — used while the pack streams in during boot. Cheap and
+     * idempotent: it skips any swatch that already shows a thumbnail, so it can
+     * be called repeatedly as assets arrive.
+     */
+    refreshLoadedArt() {
+        const generated = allAssets();
+        for (const section of Object.values(this.sections)) {
+            for (const swatch of section.gridEl.querySelectorAll('.swatch')) {
+                if (swatch.querySelector('canvas')) continue;   // already has art
+                const gen = generated[swatch.dataset.assetId];
+                if (gen) swatch.insertBefore(this._makeThumb(gen), swatch.firstChild);
+            }
         }
     }
 

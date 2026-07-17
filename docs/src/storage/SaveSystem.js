@@ -126,4 +126,30 @@ export const SaveSystem = {
         }
         return [...themes];
     },
+
+    /**
+     * The set of asset ids a stored save actually places (terrain + objects),
+     * run through the same legacy-id migration as load(). Boot uses these as
+     * the "critical" set so a restored island paints before the rest of the
+     * pack finishes streaming in. Empty when there's no save (first run).
+     */
+    peekAssetIds() {
+        const ids = new Set();
+        try {
+            const raw = localStorage.getItem(KEY);
+            if (!raw) return ids;
+            const data = JSON.parse(raw);
+            migrateLegacyAssetIds(data.tileMap);
+            const tm = data.tileMap || {};
+            if (Array.isArray(tm.terrain)) {
+                for (const id of tm.terrain) if (id) ids.add(id);
+            }
+            if (Array.isArray(tm.objects)) {
+                for (const o of tm.objects) if (o?.assetId) ids.add(o.assetId);
+            }
+        } catch (e) {
+            console.error('peekAssetIds failed:', e);
+        }
+        return ids;
+    },
 };
