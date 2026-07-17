@@ -56,6 +56,7 @@ const NEUTRAL_MANIFEST = [
     { ...T('path',     'Path'),      tileLike: true, builder: A.tileStonePath },
     { ...T('sand',     'Sand'),      tileLike: true, builder: A.tileSand },
     { ...T('stone',    'Stone'),     tileLike: true, builder: A.tileWhiteStone },
+    { ...T('snow',     'Snow'),      tileLike: true, builder: A.tileWhiteStone },
     { ...T('water',    'Water'),     tileLike: true, builder: A.tileWater },
     { ...TO('stairs',   'Stairs'),   noShadow: true, builder: A.tileStairs },
     { ...TO('sea_wall', 'Sea Wall', { w: 1, d: 1 }, 0.70), fitCell: true, flatBase: true, noShadow: true, builder: A.tileSeaWall },
@@ -161,6 +162,7 @@ const NORDIC_REAL_ART = new Set([
     'altar', 'blue_railing', 'cube_house', 'gate_fence', 'house',
     'terrace_house', 'tower_chapel', 'two_story',
     'hanging_lantern', 'main_chapel', 'pergola_house', 'villa', 'well',
+    'archway', 'bench', 'corner_wall', 'pebbles', 'small_bridge',
 ]);
 
 function deriveTheme(baseManifest, prefix, realArt = new Set()) {

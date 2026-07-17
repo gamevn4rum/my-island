@@ -88,7 +88,10 @@ Every visible object is a hand-made transparent PNG (this is a hard project rule
 
 1. **Author a PNG** in the Aegean style — an isometric object on a transparent background. Convention: filename `gmk_<id>.png`, prefix `gmk_` = "generated Mykonos" (the theme's historical slug, retained for save compat).
 2. **Source dirs**: cleaned originals live in `assets/raw/`; freshly generated art awaiting cleanup goes in `assets/raw_pending/`. Variants can sit in `assets/newAsset/`.
-3. **Trim** with `python3 tools/process_assets.py` (reads `raw/`, or `--pending` for `raw_pending/`). It only crops transparent borders — no recolor, no downscale. Output lands in `assets/<name>.png`. Background removal is done by hand before this step (deliberate quality bar).
+3. **Trim + compress** with `python tools/process_assets.py --quantize 256 <file(s)>` (reads `raw/`, or `--pending` for `raw_pending/`). Output lands in `assets/<name>.png`. Background removal is done by hand before this step (deliberate quality bar).
+   - **Always pass `--quantize 256`.** This is the load-time strategy — a 256-colour adaptive palette is near-lossless on this flat cobalt-on-cream art but shrinks the PNGs ~80–93% (a batch of 24-bit RGBA sources went 14.7 MB → 1.1 MB). Every shipped asset in `assets/` is quantized; new ones must match, or they bloat the first-load payload. Without the flag the script only crops transparent borders (no recolor, no downscale).
+   - **Interpreter:** on this Windows box only `python` (C:\Python313) has Pillow — `python3`/`py` don't. `--quantize` takes an explicit value (`--quantize 256`), otherwise argparse eats the next filename as its argument.
+   - **Filename must equal the asset id** (`<id>.png`), since the manifest derives `filename` from `id`. Fix source-name typos before/at this step (e.g. a raw `nord_arcway.png` had to become `nord_archway.png` to match id `nord_archway`).
 4. **Register** the asset in `src/assets/assetManifest.js` (the single source of truth).
 5. **Load**: `assetLoader.js` tries `assets/<filename>`, runs it through `imageToAsset.js` (trim → detect base/diamond geometry → infer anchor), then pre-renders a display canvas + pre-blurred cast-shadow canvas. On load failure it calls the manifest entry's `builder` (procedural fallback in `assetDefinitions.js` / `voxelRenderer.js`).
 6. **Display**: `AssetPalette.js` renders two stacked sections in the right-side palette — a themed section (theme switcher + Buildings/Water/Props tabs, top ~2/3) and a neutral section (Terrain/Nature tabs, bottom ~1/3). Each section has its own swatch grid; the renderer places assets by anchor.
@@ -105,7 +108,9 @@ Every visible object is a hand-made transparent PNG (this is a hard project rule
 - `shadowStyle`: `cast` (default silhouette projection) or `contact` (small grounding shadow under posts/fences).
 - `builder`: procedural fallback, only used when the PNG is missing.
 
-**Adding one asset (same theme):** author `gmk_<id>.png` → drop in `assets/raw_pending/` → `python3 tools/process_assets.py --pending` → add a one-line entry to `assetManifest.js` with the right category/footprint/flags. No code changes needed elsewhere; the palette and loader pick it up automatically. Optionally add a `builder` fallback in `assetDefinitions.js`.
+**Adding one asset (same theme):** author `gmk_<id>.png` → drop in `assets/raw_pending/` → `python tools/process_assets.py --pending --quantize 256` → add a one-line entry to `assetManifest.js` with the right category/footprint/flags. No code changes needed elsewhere; the palette and loader pick it up automatically. Optionally add a `builder` fallback in `assetDefinitions.js`.
+
+**Adding Nordic art (or another partially-derived theme):** the `nord_` set is derived from Aegean by `deriveTheme`; an entry only points at its own PNG once its bare id is in `NORDIC_REAL_ART` (`assetManifest.js`). So: trim+quantize the `assets/nord_<id>.png` as above, then add the bare id (e.g. `bench`, `small_bridge`) to `NORDIC_REAL_ART` — no new manifest rows, since it inherits the Aegean entry's footprint/flags. Terrain/nature are neutral (not themed): a new ground tile like `snow` is a single `tileLike` row in `NEUTRAL_MANIFEST` and shows under every theme.
 
 ## Themes
 

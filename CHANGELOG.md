@@ -13,6 +13,10 @@ adopts a formal release process.
 ## [Unreleased]
 
 ### Added
+- **Snow terrain.** A new snowy ground tile joins the shared Terrain palette,
+  available under every theme.
+- **More Nordic artwork.** Five more props and structures now have bespoke
+  Nordic art: the archway, bench, corner wall, pebbles, and bridge.
 - **Theme-switch loading popup.** Switching to a theme whose art hasn't loaded
   yet now shows a compact progress popup — same look as the home-screen loader —
   with a bar that fills as the assets stream in, instead of a quiet toast.
