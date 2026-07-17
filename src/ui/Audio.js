@@ -130,7 +130,7 @@ export function playTreePlacement(volume = 0.6)        { play('placementTree',  
 /**
  * Asset ids whose placement / erase should trigger the brick-stone SFX.
  * Includes the obvious stone terrain + props plus the white-plastered
- * Mykonos buildings (which are masonry under the paint).
+ * Aegean buildings (which are masonry under the paint).
  *
  * Kept as flat Sets so membership checks stay O(1) inside the per-click
  * `playPlacementFor` lookup.

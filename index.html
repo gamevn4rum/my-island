@@ -157,7 +157,10 @@
             </div>
         </div>
 
-        <audio id="bgm" src="assets/mp3/the-islander.mp3" loop preload="auto"></audio>
+        <!-- preload="none": the 4.8 MB track must not contend for bandwidth with
+             the asset pack during boot. initMusic() loads it on first play
+             (after the app is shown / on first gesture). -->
+        <audio id="bgm" src="assets/mp3/the-islander.mp3" loop preload="none"></audio>
     </div>
 
     <script type="module" src="src/main.js"></script>

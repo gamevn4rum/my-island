@@ -1,4 +1,4 @@
-# Netlify configuration for the Mykonos Island Voxels static site.
+# Netlify configuration for The Islander static site.
 #
 # We have no bundler — the site is plain ES-module JS, CSS, and PNG/OGG
 # assets — so the "build" is just a small Node script that copies the

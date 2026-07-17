@@ -19,7 +19,7 @@ import {
     getThemeManifest,
     NEUTRAL_MANIFEST,
 } from './assetManifest.js';
-import { imageToAsset, loadImageElement } from './imageToAsset.js';
+import { imageToAsset, loadImageElement, loadImageBitmap } from './imageToAsset.js';
 import { renderVoxels } from './voxelRenderer.js';
 
 // Built assets, keyed by absolute id. Populated incrementally as themes are
@@ -36,7 +36,7 @@ const _inflight = new Map();
 
 // Dedup cache keyed by everything that affects a built record: the same source
 // PNG processed with the same geometry yields identical canvases, so themes
-// that share art (e.g. the Nordic stub reusing Mykonos PNGs) reuse the work
+// that share art (e.g. the Nordic stub reusing Aegean PNGs) reuse the work
 // instead of re-fetching and re-rendering it. Maps signature → built asset.
 const _fileCache = new Map();
 
@@ -73,7 +73,9 @@ async function _processEntry(entry) {
 
     if (entry.filename) {
         try {
-            const img = await loadImageElement(`assets/${entry.filename}`);
+            // Decode off the main thread (createImageBitmap); falls back to an
+            // HTMLImageElement where unsupported. Either is a drawImage source.
+            const img = await loadImageBitmap(`assets/${entry.filename}`);
             record = imageToAsset(img, entry.footprint, entry.kind, {
                 sizeScale: entry.sizeScale ?? 1,
                 tileLike:  entry.tileLike === true,
@@ -81,6 +83,9 @@ async function _processEntry(entry) {
                 flatBase:  entry.flatBase === true,
             });
             record.source = 'image';
+            // imageToAsset copies pixels into its own trimmed canvas, so the
+            // source bitmap can be released immediately (frees GPU/CPU memory).
+            img.close?.();
         } catch {
             /* fall through to procedural fallback */
         }
@@ -125,16 +130,12 @@ export function isThemeLoaded(themeId) {
 }
 
 /**
- * Load the art for the given themes into the shared asset map. Entries already
- * present (or sharing a source PNG with an already-built entry) are reused, so
- * calling this repeatedly only ever does the outstanding work.
+ * The not-yet-built manifest entries needed for the given themes. The shared
+ * neutral set (terrain + nature) is theme-independent, so it's always included
+ * — built once on the first call, then skipped (already in `_assets`) on lazy
+ * theme loads. Entries already present are omitted.
  */
-export async function loadThemes(themeIds, onProgress = () => {}) {
-    if (!_assets) _assets = {};
-
-    // Collect the not-yet-built entries. The shared neutral set (terrain +
-    // nature) is theme-independent, so it's always brought in — built once on
-    // the first call, then skipped (already in `_assets`) on lazy theme loads.
+function collectEntries(themeIds) {
     const entries = [];
     for (const entry of NEUTRAL_MANIFEST) {
         if (!_assets[entry.id]) entries.push(entry);
@@ -145,11 +146,18 @@ export async function loadThemes(themeIds, onProgress = () => {}) {
             if (!_assets[entry.id]) entries.push(entry);
         }
     }
+    return entries;
+}
 
+/**
+ * Build a list of manifest entries into `_assets`, time-slicing so the loading
+ * bar can paint. `onProgress(fraction, name)` reports overall progress;
+ * `onEach(id)` (optional) fires as each asset becomes available — used by the
+ * background boot pass to stream new swatches into the palette.
+ */
+async function _processEntries(entries, onProgress = () => {}, onEach = null) {
     const total = entries.length;
-    let imageCount = 0;
-    let fallbackCount = 0;
-    let reuseCount = 0;
+    let imageCount = 0, fallbackCount = 0, reuseCount = 0;
     let lastYield = performance.now();
 
     for (let i = 0; i < total; i++) {
@@ -175,6 +183,7 @@ export async function loadThemes(themeIds, onProgress = () => {}) {
         if (built) _assets[entry.id] = built;
 
         onProgress((i + 1) / total, entry.name);
+        if (built && onEach) onEach(entry.id);
 
         // Time-budget yield: let the loading bar paint without burning a whole
         // frame after every asset. Cache reuses cost almost nothing, so this
@@ -186,18 +195,69 @@ export async function loadThemes(themeIds, onProgress = () => {}) {
         }
     }
 
+    return { imageCount, fallbackCount, reuseCount, total };
+}
+
+/**
+ * Load the art for the given themes into the shared asset map. Entries already
+ * present (or sharing a source PNG with an already-built entry) are reused, so
+ * calling this repeatedly only ever does the outstanding work.
+ */
+export async function loadThemes(themeIds, onProgress = () => {}) {
+    if (!_assets) _assets = {};
+    const stats = await _processEntries(collectEntries(themeIds), onProgress);
+
     for (const themeId of themeIds) {
         if (THEME_INDEX[themeId]) _loadedThemes.add(themeId);
     }
 
-    if (total > 0) {
-        const parts = [`${imageCount} images`];
-        if (reuseCount)    parts.push(`${reuseCount} reused`);
-        if (fallbackCount) parts.push(`${fallbackCount} procedural`);
+    if (stats.total > 0) {
+        const parts = [`${stats.imageCount} images`];
+        if (stats.reuseCount)    parts.push(`${stats.reuseCount} reused`);
+        if (stats.fallbackCount) parts.push(`${stats.fallbackCount} procedural`);
         console.info(`[assets] loaded ${themeIds.join(', ')} — ${parts.join(', ')}.`);
     }
 
     return _assets;
+}
+
+/**
+ * Boot loader: build the CRITICAL assets first — the ids the opening scene (or
+ * a restored save) will actually render — so the app can appear as soon as
+ * those are ready, then finish the rest of the pack in the background. Only the
+ * critical pass is awaited; the returned `restDone` promise resolves once the
+ * remaining (palette-only) assets have streamed in.
+ *
+ *   await loadThemesForBoot(themes, criticalIds, { onProgress, onBackgroundAsset })
+ *
+ * `onProgress` drives the loading bar for the (short) critical pass;
+ * `onBackgroundAsset(id)` fires per asset during the background pass.
+ */
+export async function loadThemesForBoot(themeIds, criticalIds, {
+    onProgress = () => {}, onBackgroundAsset = null,
+} = {}) {
+    if (!_assets) _assets = {};
+    const want = criticalIds instanceof Set ? criticalIds : new Set(criticalIds || []);
+
+    const critical = [], rest = [];
+    for (const entry of collectEntries(themeIds)) {
+        (want.has(entry.id) ? critical : rest).push(entry);
+    }
+
+    // Blocking: only what the first frame needs. Reported on the loading bar.
+    await _processEntries(critical, onProgress);
+
+    // Non-blocking: everything else, after the app is shown. The themes aren't
+    // marked "loaded" until this finishes, so a lazy re-request stays correct.
+    const restDone = _processEntries(rest, () => {}, onBackgroundAsset)
+        .then(() => {
+            for (const themeId of themeIds) {
+                if (THEME_INDEX[themeId]) _loadedThemes.add(themeId);
+            }
+            console.info(`[assets] boot: ${critical.length} critical + ${rest.length} background ready.`);
+        });
+
+    return { assets: _assets, restDone, criticalCount: critical.length, restCount: rest.length };
 }
 
 /**

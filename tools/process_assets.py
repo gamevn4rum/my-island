@@ -43,9 +43,36 @@ ALPHA_THRESHOLD = 8     # alpha values <= this are treated as fully transparent
 SAFETY_PAD = 2          # px of empty space kept around the trimmed object
 
 
-def trim_one(src: Path, dest: Path) -> tuple[int, tuple[int, int], tuple[int, int]]:
-    """Crop transparent borders off `src`, write to `dest`.
-    Returns (output_bytes, src_size, dest_size)."""
+def _finish(img: Image.Image, dest: Path, colors: int | None, max_dim: int | None) -> None:
+    """Optionally downscale + quantize `img`, then write it to `dest`.
+
+    - max_dim: cap the longest side (high-quality Lanczos). Off by default —
+      benchmarks show it adds ~2% after quantization while softening extreme
+      zoom, so it's an opt-in knob, not the default.
+    - colors: adaptive-palette quantization. The art is flat cobalt-on-cream,
+      so a 256-colour palette is near-lossless (RGB error <1%, soft alpha edges
+      preserved) yet cuts these 24-bit RGBA PNGs by ~80%. This is the main win.
+    """
+    if max_dim:
+        w, h = img.size
+        longest = max(w, h)
+        if longest > max_dim:
+            s = max_dim / longest
+            img = img.resize((max(1, round(w * s)), max(1, round(h * s))), Image.LANCZOS)
+
+    if colors:
+        # FASTOCTREE keeps the alpha channel (unlike the default median-cut),
+        # so anti-aliased edges stay soft. No dithering: crisper on flat art.
+        img = img.quantize(colors=colors, method=Image.Quantize.FASTOCTREE,
+                           dither=Image.Dither.NONE)
+
+    img.save(dest, format="PNG", optimize=True)
+
+
+def trim_one(src: Path, dest: Path, colors: int | None = None,
+             max_dim: int | None = None) -> tuple[int, tuple[int, int], tuple[int, int]]:
+    """Crop transparent borders off `src`, optionally downscale + quantize,
+    write to `dest`. Returns (output_bytes, src_size, dest_size)."""
     img = Image.open(src)
     if img.mode != "RGBA":
         img = img.convert("RGBA")
@@ -61,7 +88,7 @@ def trim_one(src: Path, dest: Path) -> tuple[int, tuple[int, int], tuple[int, in
     bbox = alpha.getbbox()
     if bbox is None:
         # Fully transparent input — pass through untouched rather than 0x0.
-        img.save(dest, format="PNG", optimize=True)
+        _finish(img, dest, colors, max_dim)
         return dest.stat().st_size, src_size, src_size
 
     x0, y0, x1, y1 = bbox
@@ -72,7 +99,7 @@ def trim_one(src: Path, dest: Path) -> tuple[int, tuple[int, int], tuple[int, in
     y1 = min(h, y1 + SAFETY_PAD)
 
     cropped = img.crop((x0, y0, x1, y1))
-    cropped.save(dest, format="PNG", optimize=True)
+    _finish(cropped, dest, colors, max_dim)
     return dest.stat().st_size, src_size, cropped.size
 
 
@@ -93,6 +120,21 @@ def main(argv: list[str]) -> int:
         "--source", type=Path, default=None,
         help="explicit source directory (overrides --pending)",
     )
+    parser.add_argument(
+        "--dest", type=Path, default=None,
+        help="explicit output directory (defaults to assets/)",
+    )
+    parser.add_argument(
+        "--quantize", nargs="?", type=int, const=256, default=None,
+        metavar="N",
+        help="quantize to an N-colour adaptive palette (default 256). "
+             "~80%% smaller, near-lossless for this art. Recommended.",
+    )
+    parser.add_argument(
+        "--max-dim", type=int, default=None, metavar="PX",
+        help="cap the longest side to PX (Lanczos). Off by default — adds "
+             "little after --quantize and softens extreme zoom.",
+    )
     args = parser.parse_args(argv)
 
     source = args.source if args.source else (PENDING if args.pending else RAW)
@@ -105,17 +147,24 @@ def main(argv: list[str]) -> int:
         print(f"nothing to process in {source}.")
         return 0
 
-    ASSETS.mkdir(parents=True, exist_ok=True)
+    dest_dir = args.dest if args.dest else ASSETS
+    dest_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"trimming {len(targets)} asset(s)  {source} -> {ASSETS}")
+    steps = ["trim"]
+    if args.max_dim:
+        steps.append(f"cap {args.max_dim}px")
+    if args.quantize:
+        steps.append(f"quantize {args.quantize}")
+    print(f"{' + '.join(steps)}: {len(targets)} asset(s)  {source} -> {dest_dir}")
     total_before = total_after = 0
     for src in targets:
         if not src.exists():
             print(f"  ! {src.name}: not found, skipping")
             continue
         before = src.stat().st_size
-        out_path = ASSETS / src.name
-        size, src_dim, out_dim = trim_one(src, out_path)
+        out_path = dest_dir / src.name
+        size, src_dim, out_dim = trim_one(src, out_path, colors=args.quantize,
+                                          max_dim=args.max_dim)
         total_before += before
         total_after += size
         print(

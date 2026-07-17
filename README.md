@@ -1,7 +1,7 @@
-# Mykonos Island Voxels
+# The Islander
 
 A browser-based isometric island builder with the soft, sun-bleached
-Mediterranean look of Mykonos: cobalt-blue domes on whitewashed walls,
+Mediterranean look of the Aegean: cobalt-blue domes on whitewashed walls,
 bougainvillea spilling over stone, olive trees, windmills, narrow
 cobble paths, and a sea you can carve with a click.
 
@@ -12,7 +12,7 @@ arranging things until they look right.
 
 **🌐 Play it: <https://mykonos-island-voxels.netlify.app>**
 
-![Mykonos Island Voxels — example scene](full%20city.png)
+![The Islander — example scene](full%20city.png)
 
 ---
 

@@ -27,6 +27,11 @@ adopts a formal release process.
   loads, with a music toggle in the top-left title card to pause or resume it.
 
 ### Changed
+- **Default theme renamed to "Aegean."** The original Mediterranean theme —
+  previously labelled "Mykonos" — now appears as **Aegean** in the theme
+  switcher, pairing more naturally with **Nordic** as a regional style. Existing
+  islands are unaffected: the rename is display-only, so saved builds keep their
+  exact look.
 - **Controls moved to a bottom menu.** The clock, display toggles, and island
   size/shape controls now sit in a compact horizontal bar centered along the
   bottom of the screen instead of the bottom-right corner, freeing the full
@@ -37,6 +42,12 @@ adopts a formal release process.
   Props) and a neutral section beneath it (Terrain, Nature). Switching themes
   leaves your terrain and greenery — and the palette's bottom section —
   untouched. Existing islands are migrated automatically.
+- **Much faster loading.** Several changes cut the opening wait dramatically:
+  the asset pack is now ~80% smaller on the wire (art recompressed with no
+  visible quality loss), repeat visits reuse the cached pack instead of
+  re-downloading it every time, the app appears as soon as the opening scene is
+  ready while the rest of the palette streams in behind it, and the background
+  music no longer competes for bandwidth during startup.
 - **Faster startup.** The opening load now only prepares the theme your island
   actually uses instead of every theme up front; other themes load the moment
   you switch to one. Shared artwork is also reused rather than re-processed, so
@@ -55,9 +66,9 @@ adopts a formal release process.
 - **More bespoke Nordic art.** The Nordic theme now ships with its own
   hand-made pieces — **House, Cube House, Terrace House, Two-Story, Altar,
   Tower Chapel, Blue Railing,** and **Gate Fence** — instead of borrowing the
-  Mykonos look. These eight were redrawn with cleaner cutouts for crisper,
+  Aegean look. These eight were redrawn with cleaner cutouts for crisper,
   tighter-cropped placement. The rest of the Nordic set continues to reuse
-  Mykonos art until it's drawn.
+  Aegean art until it's drawn.
 
 ---
 

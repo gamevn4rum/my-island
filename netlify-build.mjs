@@ -53,16 +53,23 @@ for (const entry of ENTRIES) {
     const dst = join(DIST, entry);
     cpSync(src, dst, {
         recursive: true,
-        // Filter out OS junk + the unused .webp duplicates living next
-        // to the .png assets in `assets/newAsset/`.
+        // Filter out OS junk, the unused .webp duplicates living next to the
+        // .png assets, and the source-only PNG dirs (`assets/raw/`,
+        // `assets/raw_pending/`) — the runtime only ever fetches the trimmed
+        // assets in `assets/` (+ `assets/newAsset/`), never the originals.
         filter: (s) => {
-            const name = s.split('/').pop();
+            const norm = s.replace(/\\/g, '/');
+            const name = norm.split('/').pop();
             if (name === '.DS_Store') return false;
             if (name.endsWith('.webp')) return false;
+            // Ignoring a directory skips its whole subtree (Node cpSync).
+            if (/\/assets\/(raw|raw_pending)(\/|$)/.test(norm)) return false;
             return true;
         },
     });
-    const sz = sizeOf(src);
+    // Report the copied size (dst), not the source — the source `assets/`
+    // dir still holds the 60 MB of `raw/` originals we deliberately skip.
+    const sz = sizeOf(dst);
     console.log(`  ✓ ${entry.padEnd(34)} ${formatBytes(sz)}`);
 }
 

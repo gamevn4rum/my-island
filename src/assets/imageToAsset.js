@@ -542,11 +542,22 @@ export function imageToAsset(image, footprint, kind, options = {}) {
 }
 
 /**
- * Promise-based image loader. Appends a per-session cache buster to bypass
- * the browser's aggressive image cache when an asset PNG is replaced on
- * disk while the dev server is running.
+ * Promise-based image loader.
+ *
+ * In LOCAL DEV we append a per-session cache buster so re-exporting a PNG
+ * while the dev server runs shows up immediately. In PRODUCTION the buster is
+ * disabled: a unique URL per page load would defeat the `immutable` asset
+ * cache (netlify.toml) and force a full re-download of the whole pack on every
+ * visit — the single biggest repeat-visit slowdown. Detected by hostname so no
+ * build step is needed.
  */
-const SESSION_BUST = Date.now().toString(36);
+const IS_LOCAL_DEV = typeof location !== 'undefined' &&
+    /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])$/.test(location.hostname);
+const SESSION_BUST = IS_LOCAL_DEV ? Date.now().toString(36) : null;
+
+function _bust(src) {
+    return SESSION_BUST ? `${src}${src.includes('?') ? '&' : '?'}v=${SESSION_BUST}` : src;
+}
 
 export function loadImageElement(src) {
     return new Promise((resolve, reject) => {
@@ -554,7 +565,25 @@ export function loadImageElement(src) {
         img.onload  = () => resolve(img);
         img.onerror = () => reject(new Error(`Image not found: ${src}`));
         img.decoding = 'async';
-        const sep = src.includes('?') ? '&' : '?';
-        img.src = `${src}${sep}v=${SESSION_BUST}`;
+        img.src = _bust(src);
     });
+}
+
+/**
+ * Decode an image off the main thread via fetch + createImageBitmap. The
+ * returned ImageBitmap is a drop-in `drawImage` source with `.width/.height`,
+ * so imageToAsset() consumes it exactly like an HTMLImageElement — but the
+ * (expensive) PNG decode happens on a browser-internal thread instead of
+ * blocking the loading bar. Callers should `.close()` it once processed.
+ *
+ * Falls back to the HTMLImageElement path where createImageBitmap is missing.
+ */
+export async function loadImageBitmap(src) {
+    if (typeof createImageBitmap !== 'function' || typeof fetch !== 'function') {
+        return loadImageElement(src);
+    }
+    const resp = await fetch(_bust(src));
+    if (!resp.ok) throw new Error(`Image not found: ${src} (${resp.status})`);
+    const blob = await resp.blob();
+    return createImageBitmap(blob);
 }
